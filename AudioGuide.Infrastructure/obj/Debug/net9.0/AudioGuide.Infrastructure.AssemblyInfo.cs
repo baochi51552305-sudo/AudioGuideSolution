@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AudioGuide.Infrastructure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2ac33e432d0dbbe1d609297a570f3b6b6ca6513f")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7e529cc09d8628230ac4dc113c5aecec4586a88f")]
 [assembly: System.Reflection.AssemblyProductAttribute("AudioGuide.Infrastructure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AudioGuide.Infrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

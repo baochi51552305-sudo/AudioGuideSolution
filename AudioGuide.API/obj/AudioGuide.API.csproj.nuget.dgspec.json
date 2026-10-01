@@ -81,6 +81,10 @@
               "target": "Package",
               "version": "[9.0.2, )"
             },
+            "Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite": {
+              "target": "Package",
+              "version": "[9.0.*, )"
+            },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
               "version": "[6.6.2, )"
@@ -257,6 +261,10 @@
               "suppressParent": "All",
               "target": "Package",
               "version": "[9.0.2, )"
+            },
+            "Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite": {
+              "target": "Package",
+              "version": "[9.0.*, )"
             }
           },
           "imports": [

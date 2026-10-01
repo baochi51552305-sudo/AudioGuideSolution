@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "N3mUNmWsyO4=",
+  "dgSpecHash": "YKkIdhgOtGw=",
   "success": true,
   "projectFilePath": "D:\\LCB\\LCB_CNPM\\Multilingual\\AudioGuideSolution\\AudioGuide.Infrastructure\\AudioGuide.Infrastructure.csproj",
   "expectedPackageFiles": [
@@ -56,8 +56,13 @@
     "C:\\Users\\Chi Bao\\.nuget\\packages\\mod_spatialite\\4.3.0.1\\mod_spatialite.4.3.0.1.nupkg.sha512",
     "C:\\Users\\Chi Bao\\.nuget\\packages\\mono.texttemplating\\3.0.0\\mono.texttemplating.3.0.0.nupkg.sha512",
     "C:\\Users\\Chi Bao\\.nuget\\packages\\nettopologysuite\\2.5.0\\nettopologysuite.2.5.0.nupkg.sha512",
+    "C:\\Users\\Chi Bao\\.nuget\\packages\\nettopologysuite.io.postgis\\2.1.0\\nettopologysuite.io.postgis.2.1.0.nupkg.sha512",
     "C:\\Users\\Chi Bao\\.nuget\\packages\\nettopologysuite.io.spatialite\\2.0.0\\nettopologysuite.io.spatialite.2.0.0.nupkg.sha512",
     "C:\\Users\\Chi Bao\\.nuget\\packages\\nettopologysuite.io.sqlserverbytes\\2.1.0\\nettopologysuite.io.sqlserverbytes.2.1.0.nupkg.sha512",
+    "C:\\Users\\Chi Bao\\.nuget\\packages\\npgsql\\9.0.3\\npgsql.9.0.3.nupkg.sha512",
+    "C:\\Users\\Chi Bao\\.nuget\\packages\\npgsql.entityframeworkcore.postgresql\\9.0.4\\npgsql.entityframeworkcore.postgresql.9.0.4.nupkg.sha512",
+    "C:\\Users\\Chi Bao\\.nuget\\packages\\npgsql.entityframeworkcore.postgresql.nettopologysuite\\9.0.4\\npgsql.entityframeworkcore.postgresql.nettopologysuite.9.0.4.nupkg.sha512",
+    "C:\\Users\\Chi Bao\\.nuget\\packages\\npgsql.nettopologysuite\\9.0.3\\npgsql.nettopologysuite.9.0.3.nupkg.sha512",
     "C:\\Users\\Chi Bao\\.nuget\\packages\\sqlitepclraw.bundle_e_sqlite3\\2.1.12\\sqlitepclraw.bundle_e_sqlite3.2.1.12.nupkg.sha512",
     "C:\\Users\\Chi Bao\\.nuget\\packages\\sqlitepclraw.core\\2.1.12\\sqlitepclraw.core.2.1.12.nupkg.sha512",
     "C:\\Users\\Chi Bao\\.nuget\\packages\\sqlitepclraw.lib.e_sqlite3\\2.1.12\\sqlitepclraw.lib.e_sqlite3.2.1.12.nupkg.sha512",
