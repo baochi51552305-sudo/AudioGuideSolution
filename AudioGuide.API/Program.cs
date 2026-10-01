@@ -7,16 +7,11 @@ using System;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Cấu hình Connection String SQL Server
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-                       ?? "Server=localhost;Database=AudioGuideDb;Trusted_Connection=True;TrustServerCertificate=True;";
-
+// 1. Cấu hình Database sử dụng SQLite (tự động lưu vào file audioguide.db trên Render)
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(connectionString, sqlOptions =>
-    {
-        // Kích hoạt hỗ trợ địa lý NetTopologySuite trên SQL Server
-        sqlOptions.UseNetTopologySuite();
-    }));
+{
+    options.UseSqlite("Data Source=audioguide.db");
+});
 
 // 2. Đăng ký Dependency Injection (IoC)
 builder.Services.AddScoped<IPoiRepository, PoiRepository>();
@@ -39,6 +34,13 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+// Tự động khởi tạo database và nạp sẵn dữ liệu mẫu khi ứng dụng khởi động
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.EnsureCreated();
+}
 
 // 4. Kích hoạt Swagger UI
 app.UseSwagger();
