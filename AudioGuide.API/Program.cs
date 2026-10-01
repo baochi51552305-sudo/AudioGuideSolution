@@ -7,10 +7,10 @@ using System;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Cấu hình Database sử dụng SQLite (tự động lưu vào file audioguide.db trên Render)
+// Cấu hình SQLite kèm hỗ trợ tọa độ Point (NetTopologySuite)
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    options.UseSqlite("Data Source=audioguide.db");
+    options.UseSqlite("Data Source=audioguide.db", x => x.UseNetTopologySuite());
 });
 
 // 2. Đăng ký Dependency Injection (IoC)

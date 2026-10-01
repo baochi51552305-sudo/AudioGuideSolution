@@ -16,3 +16,4 @@ D:\LCB\LCB_CNPM\Multilingual\AudioGuideSolution\AudioGuide.Infrastructure\obj\De
 D:\LCB\LCB_CNPM\Multilingual\AudioGuideSolution\AudioGuide.Infrastructure\bin\Debug\net9.0\AudioGuide.Infrastructure.runtimeconfig.json
 D:\LCB\LCB_CNPM\Multilingual\AudioGuideSolution\AudioGuide.Infrastructure\obj\Debug\net9.0\EFCoreSqlServerNetTopologySuite.cs
 D:\LCB\LCB_CNPM\Multilingual\AudioGuideSolution\AudioGuide.Infrastructure\obj\Debug\net9.0\AudioGuide.Infrastructure.genruntimeconfig.cache
+D:\LCB\LCB_CNPM\Multilingual\AudioGuideSolution\AudioGuide.Infrastructure\obj\Debug\net9.0\AudioGuide.Infrastructure.sourcelink.json

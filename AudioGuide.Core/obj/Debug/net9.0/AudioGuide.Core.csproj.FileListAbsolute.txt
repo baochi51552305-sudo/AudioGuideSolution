@@ -10,3 +10,4 @@ D:\LCB\LCB_CNPM\Multilingual\AudioGuideSolution\AudioGuide.Core\obj\Debug\net9.0
 D:\LCB\LCB_CNPM\Multilingual\AudioGuideSolution\AudioGuide.Core\obj\Debug\net9.0\AudioGuide.Core.pdb
 D:\LCB\LCB_CNPM\Multilingual\AudioGuideSolution\AudioGuide.Core\obj\Debug\net9.0\ref\AudioGuide.Core.dll
 D:\LCB\LCB_CNPM\Multilingual\AudioGuideSolution\AudioGuide.Core\obj\Debug\net9.0\AudioGuide.Core.csproj.AssemblyReference.cache
+D:\LCB\LCB_CNPM\Multilingual\AudioGuideSolution\AudioGuide.Core\obj\Debug\net9.0\AudioGuide.Core.sourcelink.json

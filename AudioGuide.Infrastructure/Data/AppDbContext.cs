@@ -25,8 +25,6 @@ public class AppDbContext : DbContext
             entity.Property(p => p.Code).HasMaxLength(50).IsRequired();
             entity.HasIndex(p => p.Code).IsUnique();
 
-            // Cột Location lưu trữ đối tượng tọa độ địa lý WGS84
-            entity.Property(p => p.Location).HasColumnType("geography").IsRequired();
         });
 
         // 2. Cấu hình bảng POI Translations (Đa ngôn ngữ)
