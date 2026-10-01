@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "dk1/EqCiDkA=",
+  "dgSpecHash": "vixWYpnaP9Y=",
   "success": true,
   "projectFilePath": "D:\\LCB\\LCB_CNPM\\Multilingual\\AudioGuideSolution\\AudioGuide.API\\AudioGuide.API.csproj",
   "expectedPackageFiles": [
@@ -25,6 +25,7 @@
     "C:\\Users\\Chi Bao\\.nuget\\packages\\microsoft.entityframeworkcore.abstractions\\9.0.20\\microsoft.entityframeworkcore.abstractions.9.0.20.nupkg.sha512",
     "C:\\Users\\Chi Bao\\.nuget\\packages\\microsoft.entityframeworkcore.analyzers\\9.0.20\\microsoft.entityframeworkcore.analyzers.9.0.20.nupkg.sha512",
     "C:\\Users\\Chi Bao\\.nuget\\packages\\microsoft.entityframeworkcore.design\\9.0.2\\microsoft.entityframeworkcore.design.9.0.2.nupkg.sha512",
+    "C:\\Users\\Chi Bao\\.nuget\\packages\\microsoft.entityframeworkcore.inmemory\\9.0.20\\microsoft.entityframeworkcore.inmemory.9.0.20.nupkg.sha512",
     "C:\\Users\\Chi Bao\\.nuget\\packages\\microsoft.entityframeworkcore.relational\\9.0.20\\microsoft.entityframeworkcore.relational.9.0.20.nupkg.sha512",
     "C:\\Users\\Chi Bao\\.nuget\\packages\\microsoft.entityframeworkcore.sqlite\\9.0.20\\microsoft.entityframeworkcore.sqlite.9.0.20.nupkg.sha512",
     "C:\\Users\\Chi Bao\\.nuget\\packages\\microsoft.entityframeworkcore.sqlite.core\\9.0.20\\microsoft.entityframeworkcore.sqlite.core.9.0.20.nupkg.sha512",
