@@ -3,8 +3,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QRCoder;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Web;
 
 namespace AudioGuide.API.Controllers;
@@ -16,8 +18,18 @@ public class QrGuideController(AppDbContext context, IHttpClientFactory httpClie
     private readonly AppDbContext _context = context;
     private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
 
+    // Danh sách 5 ngôn ngữ chuẩn được hỗ trợ toàn hệ thống
+    private static readonly Dictionary<string, (string Label, string GoogleLang)> SupportedLanguages = new()
+    {
+        { "vi", ("🇻🇳 Tiếng Việt", "vi") },
+        { "zh", ("🇨🇳 中文 (Chinese)", "zh-CN") },
+        { "en", ("🇺🇸 English (US)", "en") },
+        { "fr", ("🇫🇷 Français", "fr") },
+        { "ru", ("🇷🇺 Русский", "ru") }
+    };
+
     /// <summary>
-    /// API trả về toàn bộ dữ liệu file MP3 để trình duyệt tính đúng tổng thời lượng (0:05 / 0:18) và tua được
+    /// API stream audio thuyết minh TTS thực tế cho từng ngôn ngữ
     /// </summary>
     [HttpGet("audio")]
     public async Task<IActionResult> GetTtsAudio([FromQuery] string text, [FromQuery] string lang = "vi")
@@ -29,15 +41,14 @@ public class QrGuideController(AppDbContext context, IHttpClientFactory httpClie
             var client = _httpClientFactory.CreateClient();
             client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
 
-            // Giới hạn câu đọc chuẩn ngữ điệu TTS
             string cleanText = text.Length > 200 ? text[..195] + "..." : text;
             string encoded = HttpUtility.UrlEncode(cleanText);
-            string ttsUrl = $"https://translate.google.com/translate_tts?ie=UTF-8&tl={lang}&client=tw-ob&q={encoded}";
 
-            // Tải trọn vẹn mảng byte để có Content-Length cố định
+            string targetTtsLang = SupportedLanguages.TryGetValue(lang.ToLower(), out var langInfo) ? langInfo.GoogleLang : "vi";
+            string ttsUrl = $"https://translate.google.com/translate_tts?ie=UTF-8&tl={targetTtsLang}&client=tw-ob&q={encoded}";
+
             byte[] audioBytes = await client.GetByteArrayAsync(ttsUrl);
 
-            // Bật Range Processing để điện thoại kéo tua và nhận diện đúng thanh thời lượng
             Response.Headers.Append("Accept-Ranges", "bytes");
             return File(audioBytes, "audio/mpeg", enableRangeProcessing: true);
         }
@@ -47,12 +58,20 @@ public class QrGuideController(AppDbContext context, IHttpClientFactory httpClie
         }
     }
 
+    /// <summary>
+    /// Giao diện Web hiển thị thông tin thuyết minh khi quét QR bằng điện thoại
+    /// </summary>
     [HttpGet("scan/{token}")]
     [Produces("text/html")]
     public async Task<IActionResult> Scan(string token, [FromQuery] string? lang = "vi")
     {
         string normToken = string.IsNullOrWhiteSpace(token) ? string.Empty : token.Trim();
         string targetLang = string.IsNullOrWhiteSpace(lang) ? "vi" : lang.Trim().ToLower();
+
+        if (!SupportedLanguages.ContainsKey(targetLang))
+        {
+            targetLang = "vi";
+        }
 
         // 1. Tìm theo mã QR Token
         var qr = await _context.QrCodes
@@ -62,22 +81,24 @@ public class QrGuideController(AppDbContext context, IHttpClientFactory httpClie
 
         var poi = qr?.Poi;
 
-        // 2. Tìm dự phòng theo ID hoặc Tên/Code
+        // 2. Tìm dự phòng theo 5 địa điểm mới nếu quét theo mã/ID
         poi ??= await _context.Pois
             .Include(p => p.Translations)
             .FirstOrDefaultAsync(p =>
                 p.Id.ToString() == normToken ||
                 p.Code.ToLower() == normToken.ToLower() ||
-                (normToken.Contains("dinh", StringComparison.OrdinalIgnoreCase) && p.Id == 1) ||
-                (normToken.Contains("duc ba", StringComparison.OrdinalIgnoreCase) && p.Id == 2) ||
-                (normToken.Contains("buu dien", StringComparison.OrdinalIgnoreCase) && p.Id == 3));
+                (normToken.Contains("ben thanh", StringComparison.OrdinalIgnoreCase) && p.Id == 1) ||
+                (normToken.Contains("nha hat", StringComparison.OrdinalIgnoreCase) && p.Id == 2) ||
+                (normToken.Contains("chung tich", StringComparison.OrdinalIgnoreCase) && p.Id == 3) ||
+                (normToken.Contains("landmark", StringComparison.OrdinalIgnoreCase) && p.Id == 4) ||
+                (normToken.Contains("nha rong", StringComparison.OrdinalIgnoreCase) && p.Id == 5));
 
         if (poi == null)
         {
             return NotFound("<h3 style='font-family: sans-serif; text-align: center; margin-top: 50px;'>Không tìm thấy địa điểm tham quan hoặc mã QR không tồn tại.</h3>");
         }
 
-        // 3. Lấy bản dịch tương ứng
+        // 3. Lấy bản dịch theo ngôn ngữ người dùng chọn
         var translations = poi.Translations ?? Enumerable.Empty<Core.Entities.PoiTranslation>();
         var trans = translations.FirstOrDefault(t => string.Equals(t.LanguageCode, targetLang, StringComparison.OrdinalIgnoreCase))
                  ?? translations.FirstOrDefault(t => string.Equals(t.LanguageCode, "vi", StringComparison.OrdinalIgnoreCase))
@@ -86,16 +107,39 @@ public class QrGuideController(AppDbContext context, IHttpClientFactory httpClie
         string title = trans?.Title ?? "Điểm Tham Quan";
         string desc = trans?.Description ?? "Nội dung thuyết minh đang được cập nhật.";
 
-        // URL stream MP3 trực tiếp từ backend
+        // Link audio stream từ endpoint API
         string safeDesc = HttpUtility.UrlEncode(desc);
         string audioStreamUrl = $"{Request.Scheme}://{Request.Host}/api/QrGuide/audio?text={safeDesc}&lang={targetLang}";
 
-        // Tọa độ GPS chính xác
-        double lat = poi.Location != null ? poi.Location.Y : 10.7770;
-        double lng = poi.Location != null ? poi.Location.X : 106.6953;
+        // Tọa độ GPS
+        double lat = poi.Location != null ? poi.Location.Y : 10.7725;
+        double lng = poi.Location != null ? poi.Location.X : 106.6983;
 
-        string otherLang = targetLang == "vi" ? "en" : "vi";
-        string otherLangLabel = targetLang == "vi" ? "🇬🇧 English" : "🇻🇳 Tiếng Việt";
+        // Render danh sách 5 tùy chọn ngôn ngữ cho dropdown
+        var langOptionsHtml = new StringBuilder();
+        foreach (var (code, info) in SupportedLanguages)
+        {
+            string selected = (code == targetLang) ? "selected" : "";
+            langOptionsHtml.AppendLine($"<option value='{code}' {selected}>{info.Label}</option>");
+        }
+
+        string gpsLabel = targetLang switch
+        {
+            "zh" => "GPS坐标",
+            "en" => "GPS Coordinates",
+            "fr" => "Coordonnées GPS",
+            "ru" => "GPS Координаты",
+            _ => "Tọa độ GPS"
+        };
+
+        string mapBtnLabel = targetLang switch
+        {
+            "zh" => "在谷歌地图中打开",
+            "en" => "Open in Google Maps",
+            "fr" => "Ouvrir dans Google Maps",
+            "ru" => "Открыть на Google Картах",
+            _ => "Chỉ đường trên Google Maps"
+        };
 
         string htmlContent = $@"
 <!DOCTYPE html>
@@ -124,7 +168,7 @@ public class QrGuideController(AppDbContext context, IHttpClientFactory httpClie
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
-            margin-bottom: 12px; 
+            margin-bottom: 16px; 
         }}
         .badge {{ 
             background: #e7f3ff; 
@@ -134,17 +178,19 @@ public class QrGuideController(AppDbContext context, IHttpClientFactory httpClie
             font-size: 13px; 
             font-weight: 600; 
         }}
-        .lang-switch {{ 
-            text-decoration: none; 
-            color: #4b4f56; 
-            background: #f0f2f5; 
-            padding: 6px 12px; 
-            border-radius: 12px; 
-            font-size: 13px; 
-            font-weight: 600; 
+        .lang-select {{
+            background: #f0f2f5;
+            border: 1px solid #dcdfe3;
+            border-radius: 12px;
+            padding: 6px 10px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #4b4f56;
+            outline: none;
+            cursor: pointer;
         }}
         h1 {{ 
-            font-size: 24px; 
+            font-size: 22px; 
             font-weight: 700; 
             margin: 8px 0 14px 0; 
             color: #050505; 
@@ -199,25 +245,27 @@ public class QrGuideController(AppDbContext context, IHttpClientFactory httpClie
     <div class='card'>
         <div class='header-row'>
             <span class='badge'>📍 Audio Guide</span>
-            <a class='lang-switch' href='?lang={otherLang}'>{otherLangLabel}</a>
+            <select class='lang-select' onchange='window.location.search = ""?lang="" + this.value'>
+                {langOptionsHtml}
+            </select>
         </div>
         
         <h1>{title}</h1>
         <p>{desc}</p>
 
         <div class='audio-wrapper'>
-            <audio controls preload='metadata'>
+            <audio controls preload='metadata' autoplay>
                 <source src='{audioStreamUrl}' type='audio/mpeg'>
-                Trình duyệt của bạn không hỗ trợ trình phát âm thanh.
+                Trình duyệt không hỗ trợ nghe thuyết minh.
             </audio>
         </div>
 
         <div class='gps-box'>
-            🌐 <strong>{(targetLang == "vi" ? "Tọa độ GPS" : "GPS Coordinates")}:</strong> {lat:F5}, {lng:F5}
+            🌐 <strong>{gpsLabel}:</strong> {lat:F5}, {lng:F5}
         </div>
 
         <a class='map-btn' href='https://www.google.com/maps?q={lat},{lng}' target='_blank'>
-            🗺 {(targetLang == "vi" ? "Chỉ đường trên Google Maps" : "Open in Google Maps")}
+            🗺 {mapBtnLabel}
         </a>
     </div>
 </body>
@@ -226,6 +274,9 @@ public class QrGuideController(AppDbContext context, IHttpClientFactory httpClie
         return Content(htmlContent, "text/html; charset=utf-8");
     }
 
+    /// <summary>
+    /// API tạo ảnh QR Code
+    /// </summary>
     [HttpGet("generate/{token}")]
     public IActionResult GenerateQr(string token, [FromQuery] string? lang = "vi")
     {

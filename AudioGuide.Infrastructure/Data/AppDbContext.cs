@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using NetTopologySuite.Geometries;
 using System;
+using System.Net;
 
 namespace AudioGuide.Infrastructure.Data;
 
@@ -27,13 +28,13 @@ public class AppDbContext : DbContext
             entity.HasIndex(p => p.Code).IsUnique();
         });
 
-        // 2. Cấu hình bảng POI Translations (Đa ngôn ngữ)
+        // 2. Cấu hình bảng POI Translations
         modelBuilder.Entity<PoiTranslation>(entity =>
         {
             entity.HasKey(t => t.Id);
             entity.Property(t => t.LanguageCode).HasMaxLength(10).IsRequired();
             entity.Property(t => t.Title).HasMaxLength(200).IsRequired();
-            entity.Property(t => t.AudioUrl).HasMaxLength(500).IsRequired();
+            entity.Property(t => t.AudioUrl).HasMaxLength(1000).IsRequired();
 
             entity.HasIndex(t => new { t.PoiId, t.LanguageCode }).IsUnique();
 
@@ -57,17 +58,17 @@ public class AppDbContext : DbContext
         });
 
         // ==========================================
-        // SEED DATA: 5 ĐỊA ĐIỂM TIÊU BIỂU TP.HCM
+        // SEED DATA: 5 ĐỊA ĐIỂM + 5 VOICE THUYẾT MINH THỰC TẾ
         // ==========================================
         var geometryFactory = NetTopologySuite.NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
 
-        // A. Danh sách 5 địa danh (Kinh độ X, Vĩ độ Y)
+        // Danh sách 5 địa danh
         modelBuilder.Entity<Poi>().HasData(
             new Poi
             {
                 Id = 1,
                 Code = "CHO_BEN_THANH",
-                Location = geometryFactory.CreatePoint(new Coordinate(106.6983, 10.7725)), // Chợ Bến Thành
+                Location = geometryFactory.CreatePoint(new Coordinate(106.6983, 10.7725)),
                 TriggerRadiusMeters = 35.0,
                 IsActive = true,
                 CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
@@ -76,7 +77,7 @@ public class AppDbContext : DbContext
             {
                 Id = 2,
                 Code = "NHA_HAT_THANH_PHO",
-                Location = geometryFactory.CreatePoint(new Coordinate(106.7032, 10.7766)), // Nhà hát Thành phố
+                Location = geometryFactory.CreatePoint(new Coordinate(106.7032, 10.7766)),
                 TriggerRadiusMeters = 30.0,
                 IsActive = true,
                 CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
@@ -85,7 +86,7 @@ public class AppDbContext : DbContext
             {
                 Id = 3,
                 Code = "BAO_TANG_CHUNG_TICH_CHIEN_TRANH",
-                Location = geometryFactory.CreatePoint(new Coordinate(106.6922, 10.7794)), // Bảo tàng Chứng tích Chiến tranh
+                Location = geometryFactory.CreatePoint(new Coordinate(106.6922, 10.7794)),
                 TriggerRadiusMeters = 30.0,
                 IsActive = true,
                 CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
@@ -94,7 +95,7 @@ public class AppDbContext : DbContext
             {
                 Id = 4,
                 Code = "LANDMARK_81",
-                Location = geometryFactory.CreatePoint(new Coordinate(106.7218, 10.7950)), // Landmark 81
+                Location = geometryFactory.CreatePoint(new Coordinate(106.7218, 10.7950)),
                 TriggerRadiusMeters = 50.0,
                 IsActive = true,
                 CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
@@ -103,27 +104,29 @@ public class AppDbContext : DbContext
             {
                 Id = 5,
                 Code = "BEN_NHA_RONG",
-                Location = geometryFactory.CreatePoint(new Coordinate(106.7068, 10.7681)), // Bến Nhà Rồng
+                Location = geometryFactory.CreatePoint(new Coordinate(106.7068, 10.7681)),
                 TriggerRadiusMeters = 35.0,
                 IsActive = true,
                 CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             }
         );
 
-        // B. Bản dịch thuyết minh 5 ngôn ngữ (vi, zh, en, fr, ru)
+        // Hàm tiện ích tạo URL Voice thực tế bằng giọng đọc chuẩn bản ngữ
+        static string BuildTtsUrl(string text, string lang) =>
+            $"https://translate.google.com/translate_tts?ie=UTF-8&tl={lang}&client=tw-ob&q={Uri.EscapeDataString(text)}";
+
+        // 25 Bản dịch với Voice Audio thực tế theo chuẩn từng thứ tiếng
         modelBuilder.Entity<PoiTranslation>().HasData(
-            // ----------------------------------------------------
-            // 1. Chợ Bến Thành (Id: 1 -> 5)
-            // ----------------------------------------------------
+            // 1. Chợ Bến Thành
             new PoiTranslation
             {
                 Id = 1,
                 PoiId = 1,
                 LanguageCode = "vi",
                 Title = "Chợ Bến Thành",
-                Description = "Biểu tượng giao thương lâu đời và sống động bậc nhất giữa lòng trung tâm Thành phố Hồ Chí Minh.",
-                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
-                DurationSeconds = 150
+                Description = "Chào mừng quý khách đến với Chợ Bến Thành, biểu tượng giao thương lâu đời và sống động bậc nhất giữa lòng Sài Gòn.",
+                AudioUrl = BuildTtsUrl("Chào mừng quý khách đến với Chợ Bến Thành, biểu tượng giao thương lâu đời và sống động bậc nhất giữa lòng Sài Gòn.", "vi"),
+                DurationSeconds = 12
             },
             new PoiTranslation
             {
@@ -131,9 +134,9 @@ public class AppDbContext : DbContext
                 PoiId = 1,
                 LanguageCode = "zh",
                 Title = "滨城市场",
-                Description = "胡志明市最具代表性的历史贸易集市，汇聚丰富多元的越南地道特色商品与美食文化。",
-                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
-                DurationSeconds = 145
+                Description = "欢迎来到滨城市场，这是胡志明市最具代表性的历史悠久的地标与繁华集市。",
+                AudioUrl = BuildTtsUrl("欢迎来到滨城市场，这是胡志明市最具代表性的历史悠久的地标与繁华集市。", "zh-CN"),
+                DurationSeconds = 10
             },
             new PoiTranslation
             {
@@ -141,9 +144,9 @@ public class AppDbContext : DbContext
                 PoiId = 1,
                 LanguageCode = "en",
                 Title = "Ben Thanh Market",
-                Description = "One of the most famous and historic commercial landmarks in central Ho Chi Minh City.",
-                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
-                DurationSeconds = 140
+                Description = "Welcome to Ben Thanh Market, one of the most famous and historic commercial landmarks in central Ho Chi Minh City.",
+                AudioUrl = BuildTtsUrl("Welcome to Ben Thanh Market, one of the most famous and historic commercial landmarks in central Ho Chi Minh City.", "en"),
+                DurationSeconds = 10
             },
             new PoiTranslation
             {
@@ -151,9 +154,9 @@ public class AppDbContext : DbContext
                 PoiId = 1,
                 LanguageCode = "fr",
                 Title = "Marché de Ben Thanh",
-                Description = "Symbole commercial et culturel emblématique au cœur de Hô Chi Minh-Ville.",
-                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
-                DurationSeconds = 148
+                Description = "Bienvenue au marché de Ben Thanh, symbole commercial et culturel incontournable au cœur de Ho Chi Minh Ville.",
+                AudioUrl = BuildTtsUrl("Bienvenue au marché de Ben Thanh, symbole commercial et culturel incontournable au cœur de Ho Chi Minh Ville.", "fr"),
+                DurationSeconds = 11
             },
             new PoiTranslation
             {
@@ -161,23 +164,21 @@ public class AppDbContext : DbContext
                 PoiId = 1,
                 LanguageCode = "ru",
                 Title = "Рынок Бен Тхань",
-                Description = "Один из старейших и известнейших торговых символов в центре Хошимина.",
-                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
-                DurationSeconds = 152
+                Description = "Добро пожаловать на рынок Бен Тхань, знаменитый исторический символ и центр торговли в Хошимине.",
+                AudioUrl = BuildTtsUrl("Добро пожаловать на рынок Бен Тхань, знаменитый исторический символ и центр торговли в Хошимине.", "ru"),
+                DurationSeconds = 11
             },
 
-            // ----------------------------------------------------
-            // 2. Nhà hát Thành phố (Id: 6 -> 10)
-            // ----------------------------------------------------
+            // 2. Nhà hát Thành phố
             new PoiTranslation
             {
                 Id = 6,
                 PoiId = 2,
                 LanguageCode = "vi",
                 Title = "Nhà hát Thành phố",
-                Description = "Công trình nghệ thuật kiến trúc Gothic - Phục Hưng Pháp tráng lệ khánh thành năm 1900.",
-                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
-                DurationSeconds = 160
+                Description = "Nhà hát Thành phố Hồ Chí Minh là công trình kiến trúc nghệ thuật cổ kính theo phong cách Phục hưng Pháp khánh thành năm 1900.",
+                AudioUrl = BuildTtsUrl("Nhà hát Thành phố Hồ Chí Minh là công trình kiến trúc nghệ thuật cổ kính theo phong cách Phục hưng Pháp khánh thành năm 1900.", "vi"),
+                DurationSeconds = 13
             },
             new PoiTranslation
             {
@@ -185,9 +186,9 @@ public class AppDbContext : DbContext
                 PoiId = 2,
                 LanguageCode = "zh",
                 Title = "胡志明市大剧院",
-                Description = "于1900年竣工的典雅法国殖民时期哥特式与文艺复兴风格艺术建筑瑰宝。",
-                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
-                DurationSeconds = 155
+                Description = "胡志明市大剧院于1900年竣工，是一座华丽的法国古典主义歌剧院建筑瑰宝。",
+                AudioUrl = BuildTtsUrl("胡志明市大剧院于1900年竣工，是一座华丽的法国古典主义歌剧院建筑瑰宝。", "zh-CN"),
+                DurationSeconds = 11
             },
             new PoiTranslation
             {
@@ -195,9 +196,9 @@ public class AppDbContext : DbContext
                 PoiId = 2,
                 LanguageCode = "en",
                 Title = "Saigon Opera House",
-                Description = "A magnificent French colonial architectural opera house completed in 1900.",
-                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
-                DurationSeconds = 150
+                Description = "The Saigon Opera House is a magnificent French colonial masterpiece officially inaugurated in 1900.",
+                AudioUrl = BuildTtsUrl("The Saigon Opera House is a magnificent French colonial masterpiece officially inaugurated in 1900.", "en"),
+                DurationSeconds = 11
             },
             new PoiTranslation
             {
@@ -205,33 +206,31 @@ public class AppDbContext : DbContext
                 PoiId = 2,
                 LanguageCode = "fr",
                 Title = "Opéra de Saïgon",
-                Description = "Magnifique chef-d'œuvre de l'architecture coloniale française inauguré en 1900.",
-                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
-                DurationSeconds = 158
+                Description = "L'Opéra de Saïgon est un somptueux chef-d'œuvre de l'architecture coloniale française inauguré en 1900.",
+                AudioUrl = BuildTtsUrl("L'Opéra de Saïgon est un somptueux chef-d'œuvre de l'architecture coloniale française inauguré en 1900.", "fr"),
+                DurationSeconds = 12
             },
             new PoiTranslation
             {
                 Id = 10,
                 PoiId = 2,
                 LanguageCode = "ru",
-                Title = "Муниципальный театр Сайгона",
-                Description = "Величественное здание оперного театра в колониальном французском стиле, открытое в 1900 году.",
-                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
-                DurationSeconds = 162
+                Title = "Муниципальный оперный театр Сайгона",
+                Description = "Оперный театр Сайгона — великолепный памятник французской колониальной архитектуры, открытый в 1900 году.",
+                AudioUrl = BuildTtsUrl("Оперный театр Сайгона — великолепный памятник французской колониальной архитектуры, открытый в 1900 году.", "ru"),
+                DurationSeconds = 12
             },
 
-            // ----------------------------------------------------
-            // 3. Bảo tàng Chứng tích Chiến tranh (Id: 11 -> 15)
-            // ----------------------------------------------------
+            // 3. Bảo tàng Chứng tích Chiến tranh
             new PoiTranslation
             {
                 Id = 11,
                 PoiId = 3,
                 LanguageCode = "vi",
                 Title = "Bảo tàng Chứng tích Chiến tranh",
-                Description = "Nơi lưu giữ những tài liệu, hiện vật lịch sử chân thực về các cuộc chiến tranh và thông điệp hòa bình.",
-                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
-                DurationSeconds = 190
+                Description = "Bảo tàng Chứng tích Chiến tranh lưu giữ hàng ngàn tài liệu, hiện vật lịch sử và lan tỏa khát vọng yêu chuộng hòa bình.",
+                AudioUrl = BuildTtsUrl("Bảo tàng Chứng tích Chiến tranh lưu giữ hàng ngàn tài liệu, hiện vật lịch sử và lan tỏa khát vọng yêu chuộng hòa bình.", "vi"),
+                DurationSeconds = 14
             },
             new PoiTranslation
             {
@@ -239,9 +238,9 @@ public class AppDbContext : DbContext
                 PoiId = 3,
                 LanguageCode = "zh",
                 Title = "战争遗迹博物馆",
-                Description = "展示有关越南近代战争历史照片、军事实物并传递珍爱和平理念的纪念博物馆。",
-                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
-                DurationSeconds = 185
+                Description = "战争遗迹博物馆展示了珍贵的近代战争实物档案，向世界传递珍爱和平的崇高理念。",
+                AudioUrl = BuildTtsUrl("战争遗迹博物馆展示了珍贵的近代战争实物档案，向世界传递珍爱和平的崇高理念。", "zh-CN"),
+                DurationSeconds = 11
             },
             new PoiTranslation
             {
@@ -249,9 +248,9 @@ public class AppDbContext : DbContext
                 PoiId = 3,
                 LanguageCode = "en",
                 Title = "War Remnants Museum",
-                Description = "A poignant museum preserving wartime exhibits, artifacts, and powerful calls for world peace.",
-                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
-                DurationSeconds = 180
+                Description = "The War Remnants Museum preserves thousands of historic wartime artifacts, delivering a profound message of global peace.",
+                AudioUrl = BuildTtsUrl("The War Remnants Museum preserves thousands of historic wartime artifacts, delivering a profound message of global peace.", "en"),
+                DurationSeconds = 12
             },
             new PoiTranslation
             {
@@ -259,9 +258,9 @@ public class AppDbContext : DbContext
                 PoiId = 3,
                 LanguageCode = "fr",
                 Title = "Musée des vestiges de guerre",
-                Description = "Musée mémorial conservant des preuves historiques émouvantes et un puissant message de paix.",
-                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
-                DurationSeconds = 188
+                Description = "Le Musée des vestiges de guerre conserve des témoignages historiques poignants et diffuse un message d'espoir pour la paix.",
+                AudioUrl = BuildTtsUrl("Le Musée des vestiges de guerre conserve des témoignages historiques poignants et diffuse un message d'espoir pour la paix.", "fr"),
+                DurationSeconds = 13
             },
             new PoiTranslation
             {
@@ -269,23 +268,21 @@ public class AppDbContext : DbContext
                 PoiId = 3,
                 LanguageCode = "ru",
                 Title = "Музей жертв войны",
-                Description = "Мемориальный комплекс, хранящий свидетельства военных событий и призыв к глобальному миру.",
-                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
-                DurationSeconds = 195
+                Description = "Музей жертв войны хранит тысячи исторических свидетельств и призывает людей к миру и согласию во всем мире.",
+                AudioUrl = BuildTtsUrl("Музей жертв войны хранит тысячи исторических свидетельств и призывает людей к миру и согласию во всем мире.", "ru"),
+                DurationSeconds = 13
             },
 
-            // ----------------------------------------------------
-            // 4. Landmark 81 (Id: 16 -> 20)
-            // ----------------------------------------------------
+            // 4. Landmark 81
             new PoiTranslation
             {
                 Id = 16,
                 PoiId = 4,
                 LanguageCode = "vi",
                 Title = "Landmark 81",
-                Description = "Tòa nhà cao nhất Việt Nam, biểu tượng cho khát vọng phát triển năng động và hiện đại.",
-                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
-                DurationSeconds = 130
+                Description = "Landmark 81 là tòa nhà chọc trời cao nhất Việt Nam, biểu tượng cho sự thịnh vượng và năng động của TP. Hồ Chí Minh hiện đại.",
+                AudioUrl = BuildTtsUrl("Landmark 81 là tòa nhà chọc trời cao nhất Việt Nam, biểu tượng cho sự thịnh vượng và năng động của thành phố Hồ Chí Minh hiện đại.", "vi"),
+                DurationSeconds = 13
             },
             new PoiTranslation
             {
@@ -293,9 +290,9 @@ public class AppDbContext : DbContext
                 PoiId = 4,
                 LanguageCode = "zh",
                 Title = "地标塔 81",
-                Description = "越南第一高楼，象征着胡志明市现代化蓬勃发展的新地标建筑。",
-                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
-                DurationSeconds = 125
+                Description = "地标塔81是越南第一高楼，象征着胡志明市现代化蓬勃发展的崭新形象与活力。",
+                AudioUrl = BuildTtsUrl("地标塔81是越南第一高楼，象征着胡志明市现代化蓬勃发展的崭新形象与活力。", "zh-CN"),
+                DurationSeconds = 10
             },
             new PoiTranslation
             {
@@ -303,9 +300,9 @@ public class AppDbContext : DbContext
                 PoiId = 4,
                 LanguageCode = "en",
                 Title = "Landmark 81",
-                Description = "The tallest skyscraper in Vietnam, symbolizing modern prosperity and dynamism.",
-                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
-                DurationSeconds = 120
+                Description = "Landmark 81 is the tallest skyscraper in Vietnam, standing as a proud symbol of modern prosperity and rapid innovation.",
+                AudioUrl = BuildTtsUrl("Landmark 81 is the tallest skyscraper in Vietnam, standing as a proud symbol of modern prosperity and rapid innovation.", "en"),
+                DurationSeconds = 12
             },
             new PoiTranslation
             {
@@ -313,9 +310,9 @@ public class AppDbContext : DbContext
                 PoiId = 4,
                 LanguageCode = "fr",
                 Title = "Landmark 81",
-                Description = "Le plus haut gratte-ciel du Vietnam, symbole de modernité et d'élan économique.",
-                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
-                DurationSeconds = 128
+                Description = "Landmark 81 est le plus haut gratte-ciel du Vietnam, emblème de modernité, de dynamisme et de prospérité urbaine.",
+                AudioUrl = BuildTtsUrl("Landmark 81 est le plus haut gratte-ciel du Vietnam, emblème de modernité, de dynamisme et de prospérité urbaine.", "fr"),
+                DurationSeconds = 12
             },
             new PoiTranslation
             {
@@ -323,33 +320,31 @@ public class AppDbContext : DbContext
                 PoiId = 4,
                 LanguageCode = "ru",
                 Title = "Небоскреб Landmark 81",
-                Description = "Самое высокое здание во Вьетнаме, символ стремительного современного развития страны.",
-                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
-                DurationSeconds = 132
+                Description = "Landmark 81 — самое высокое здание во Вьетнаме, яркий символ динамичного развития и современного мегаполиса.",
+                AudioUrl = BuildTtsUrl("Landmark 81 — самое высокое здание во Вьетнаме, яркий символ динамичного развития и современного мегаполиса.", "ru"),
+                DurationSeconds = 12
             },
 
-            // ----------------------------------------------------
-            // 5. Bến Nhà Rồng (Id: 21 -> 25)
-            // ----------------------------------------------------
+            // 5. Bến Nhà Rồng
             new PoiTranslation
             {
                 Id = 21,
                 PoiId = 5,
                 LanguageCode = "vi",
                 Title = "Bến Nhà Rồng",
-                Description = "Di tích lịch sử quan trọng bên sông Sài Gòn, nơi Bác Hồ ra đi tìm đường cứu nước năm 1911.",
-                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
-                DurationSeconds = 170
+                Description = "Bến Nhà Rồng bên bờ sông Sài Gòn là di tích lịch sử đặc biệt, nơi người thanh niên Nguyễn Tất Thành ra đi tìm đường cứu nước năm 1911.",
+                AudioUrl = BuildTtsUrl("Bến Nhà Rồng bên bờ sông Sài Gòn là di tích lịch sử đặc biệt, nơi người thanh niên Nguyễn Tất Thành ra đi tìm đường cứu nước năm 1911.", "vi"),
+                DurationSeconds = 14
             },
             new PoiTranslation
             {
                 Id = 22,
                 PoiId = 5,
                 LanguageCode = "zh",
-                Title = "龙屋港（胡志明博物馆）",
-                Description = "坐落于西贡河畔的重要历史遗址，1911年胡志明主席在此登船踏上寻求救国之路。",
-                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
-                DurationSeconds = 165
+                Title = "龙屋港",
+                Description = "龙屋港坐落于西贡河畔，是一处重要历史遗址，1911年青年阮必成在此乘船启程追寻救国之路。",
+                AudioUrl = BuildTtsUrl("龙屋港坐落于西贡河畔，是一处重要历史遗址，1911年青年阮必成在此乘船启程追寻救国之路。", "zh-CN"),
+                DurationSeconds = 11
             },
             new PoiTranslation
             {
@@ -357,9 +352,9 @@ public class AppDbContext : DbContext
                 PoiId = 5,
                 LanguageCode = "en",
                 Title = "Dragon Wharf (Nha Rong Wharf)",
-                Description = "A historic riverfront monument where President Ho Chi Minh departed to seek national salvation in 1911.",
-                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
-                DurationSeconds = 160
+                Description = "Nha Rong Wharf along the Saigon River is a revered historical monument from where President Ho Chi Minh departed in 1911.",
+                AudioUrl = BuildTtsUrl("Nha Rong Wharf along the Saigon River is a revered historical monument from where President Ho Chi Minh departed in 1911.", "en"),
+                DurationSeconds = 13
             },
             new PoiTranslation
             {
@@ -367,9 +362,9 @@ public class AppDbContext : DbContext
                 PoiId = 5,
                 LanguageCode = "fr",
                 Title = "Quai Nha Rong",
-                Description = "Site historique majeur au bord du fleuve Saïgon d'où le président Hô Chi Minh est parti en 1911.",
-                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
-                DurationSeconds = 168
+                Description = "Le quai Nha Rong au bord de la rivière de Saïgon est le site mémorial d'où le président Hô Chi Minh est parti en 1911.",
+                AudioUrl = BuildTtsUrl("Le quai Nha Rong au bord de la rivière de Saïgon est le site mémorial d'où le président Hô Chi Minh est parti en 1911.", "fr"),
+                DurationSeconds = 13
             },
             new PoiTranslation
             {
@@ -377,13 +372,13 @@ public class AppDbContext : DbContext
                 PoiId = 5,
                 LanguageCode = "ru",
                 Title = "Пристань Няронг",
-                Description = "Знаковое историческое место на реке Сайгон, откуда в 1911 году Хо Ши Мин отправился в путь за освобождение родины.",
-                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
-                DurationSeconds = 172
+                Description = "Пристань Няронг на реке Сайгон — святое историческое место, откуда в 1911 году Хо Ши Мин отправился в путь за независимость родины.",
+                AudioUrl = BuildTtsUrl("Пристань Няронг на реке Сайгон — святое историческое место, откуда в 1911 году Хо Ши Мин отправился в путь за независимость родины.", "ru"),
+                DurationSeconds = 14
             }
         );
 
-        // C. Mã token QR liên kết trực tiếp vào 5 POI
+        // QR Code Tokens
         modelBuilder.Entity<QrCode>().HasData(
             new QrCode { Id = 1, PoiId = 1, QrToken = "qr-cbt-01", ScanCount = 0, IsActive = true },
             new QrCode { Id = 2, PoiId = 2, QrToken = "qr-nhtp-02", ScanCount = 0, IsActive = true },
