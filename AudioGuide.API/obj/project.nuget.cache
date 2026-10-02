@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "s19Ha54TqWw=",
+  "dgSpecHash": "z7nanFc1Rpc=",
   "success": true,
   "projectFilePath": "D:\\LCB\\LCB_CNPM\\Multilingual\\AudioGuideSolution\\AudioGuide.API\\AudioGuide.API.csproj",
   "expectedPackageFiles": [
@@ -67,6 +67,7 @@
     "C:\\Users\\Chi Bao\\.nuget\\packages\\npgsql.entityframeworkcore.postgresql\\9.0.4\\npgsql.entityframeworkcore.postgresql.9.0.4.nupkg.sha512",
     "C:\\Users\\Chi Bao\\.nuget\\packages\\npgsql.entityframeworkcore.postgresql.nettopologysuite\\9.0.4\\npgsql.entityframeworkcore.postgresql.nettopologysuite.9.0.4.nupkg.sha512",
     "C:\\Users\\Chi Bao\\.nuget\\packages\\npgsql.nettopologysuite\\9.0.3\\npgsql.nettopologysuite.9.0.3.nupkg.sha512",
+    "C:\\Users\\Chi Bao\\.nuget\\packages\\qrcoder\\1.8.0\\qrcoder.1.8.0.nupkg.sha512",
     "C:\\Users\\Chi Bao\\.nuget\\packages\\sqlitepclraw.bundle_e_sqlite3\\2.1.12\\sqlitepclraw.bundle_e_sqlite3.2.1.12.nupkg.sha512",
     "C:\\Users\\Chi Bao\\.nuget\\packages\\sqlitepclraw.core\\2.1.12\\sqlitepclraw.core.2.1.12.nupkg.sha512",
     "C:\\Users\\Chi Bao\\.nuget\\packages\\sqlitepclraw.lib.e_sqlite3\\2.1.12\\sqlitepclraw.lib.e_sqlite3.2.1.12.nupkg.sha512",

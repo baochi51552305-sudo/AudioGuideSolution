@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 3,
   "targets": {
     "net9.0": {
       "Azure.Core/1.41.0": {
@@ -1387,6 +1387,22 @@
         },
         "runtime": {
           "lib/net6.0/Npgsql.NetTopologySuite.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "QRCoder/1.8.0": {
+        "type": "package",
+        "dependencies": {
+          "System.Drawing.Common": "6.0.0"
+        },
+        "compile": {
+          "lib/net6.0/QRCoder.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net6.0/QRCoder.dll": {
             "related": ".xml"
           }
         }
@@ -4659,6 +4675,34 @@
         "postgresql.png"
       ]
     },
+    "QRCoder/1.8.0": {
+      "sha512": "RuvX3PEXU6pbY/I5ItAk800jm62r+YnoPLgyS2WTgwxkOnGkOfU9ORiipHUF0LkLyqM8rlroUCA319JjRYfRFQ==",
+      "type": "package",
+      "path": "qrcoder/1.8.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE.txt",
+        "README.md",
+        "lib/net35/QRCoder.dll",
+        "lib/net35/QRCoder.xml",
+        "lib/net40/QRCoder.dll",
+        "lib/net40/QRCoder.xml",
+        "lib/net5.0/QRCoder.dll",
+        "lib/net5.0/QRCoder.xml",
+        "lib/net6.0/QRCoder.dll",
+        "lib/net6.0/QRCoder.xml",
+        "lib/netstandard1.3/QRCoder.dll",
+        "lib/netstandard1.3/QRCoder.xml",
+        "lib/netstandard2.0/QRCoder.dll",
+        "lib/netstandard2.0/QRCoder.xml",
+        "lib/netstandard2.1/QRCoder.dll",
+        "lib/netstandard2.1/QRCoder.xml",
+        "nuget-icon.png",
+        "qrcoder.1.8.0.nupkg.sha512",
+        "qrcoder.nuspec"
+      ]
+    },
     "SQLitePCLRaw.bundle_e_sqlite3/2.1.12": {
       "sha512": "mAgscpQMLw5/nfA1Q5oJVAT29yROUo1ifZGbbTpx/lwZpSxMUGoYbKfmvdm8oXER+RzxqBmmQzeBEVKfeHv2nw==",
       "type": "package",
@@ -6036,6 +6080,7 @@
       "Microsoft.EntityFrameworkCore.Sqlite.NetTopologySuite >= 9.0.*",
       "Microsoft.EntityFrameworkCore.Tools >= 9.0.2",
       "Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite >= 9.0.*",
+      "QRCoder >= 1.8.0",
       "Swashbuckle.AspNetCore >= 6.6.2"
     ]
   },
@@ -6069,7 +6114,6 @@
       },
       "frameworks": {
         "net9.0": {
-          "framework": "net9.0",
           "targetAlias": "net9.0",
           "projectReferences": {
             "D:\\LCB\\LCB_CNPM\\Multilingual\\AudioGuideSolution\\AudioGuide.Core\\AudioGuide.Core.csproj": {
@@ -6091,11 +6135,10 @@
         "auditLevel": "low",
         "auditMode": "direct"
       },
-      "SdkAnalysisLevel": "10.0.400"
+      "SdkAnalysisLevel": "9.0.300"
     },
     "frameworks": {
       "net9.0": {
-        "framework": "net9.0",
         "targetAlias": "net9.0",
         "dependencies": {
           "Microsoft.AspNetCore.OpenApi": {
@@ -6134,6 +6177,10 @@
             "target": "Package",
             "version": "[9.0.*, )"
           },
+          "QRCoder": {
+            "target": "Package",
+            "version": "[1.8.0, )"
+          },
           "Swashbuckle.AspNetCore": {
             "target": "Package",
             "version": "[6.6.2, )"
@@ -6158,7 +6205,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.401/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.318/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

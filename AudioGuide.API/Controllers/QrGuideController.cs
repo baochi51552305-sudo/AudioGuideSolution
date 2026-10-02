@@ -1,6 +1,7 @@
 ﻿using AudioGuide.Core.DTOs;
 using AudioGuide.Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using QRCoder;
 
 namespace AudioGuide.API.Controllers;
 
@@ -30,5 +31,21 @@ public class QrGuideController : ControllerBase
             return NotFound(new { message = "Không tìm thấy điểm tham quan hoặc mã QR không tồn tại." });
 
         return Ok(narrative);
+    }
+    [HttpGet("generate/{token}")]
+    public IActionResult GenerateQr(string token, [FromQuery] string? lang = "vi")
+    {
+        // URL thực tế của frontend hoặc endpoint scan trên Render
+        // Du khách quét QR bằng camera điện thoại sẽ mở URL này
+        var requestUrl = $"{Request.Scheme}://{Request.Host}/api/QrGuide/scan/{token}?lang={lang}";
+
+        using var qrGenerator = new QRCodeGenerator();
+        var qrCodeData = qrGenerator.CreateQrCode(requestUrl, QRCodeGenerator.ECCLevel.Q);
+
+        // Tạo ảnh PNG dạng PngByteQRCode (hoạt động tốt trên Linux/Docker của Render)
+        var qrCode = new PngByteQRCode(qrCodeData);
+        byte[] qrCodeBytes = qrCode.GetGraphic(20);
+
+        return File(qrCodeBytes, "image/png");
     }
 }
