@@ -73,9 +73,9 @@ public class QrGuideController : ControllerBase
         h1 {{ font-size: 22px; margin-top: 5px; color: #1a365d; }}
         .badge {{ display: inline-block; background: #ebf8ff; color: #3182ce; padding: 5px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; margin-bottom: 12px; }}
         p {{ line-height: 1.6; color: #4a5568; font-size: 15px; }}
-        .audio-box {{ margin: 22px 0; background: #f7fafc; padding: 18px; border-radius: 14px; border: 1px solid #e2e8f0; text-align: center; }}
-        .play-btn {{ display: inline-block; width: 100%; padding: 14px 0; font-size: 16px; font-weight: bold; color: white; background: #e53e3e; border: none; border-radius: 10px; cursor: pointer; margin-bottom: 12px; }}
-        audio {{ width: 100%; margin-top: 10px; outline: none; }}
+        .audio-box {{ margin: 22px 0; background: #f7fafc; padding: 16px; border-radius: 14px; border: 1px solid #e2e8f0; text-align: center; }}
+        .audio-box label {{ font-size: 14px; font-weight: bold; color: #2b6cb0; display: block; margin-bottom: 10px; }}
+        audio {{ width: 100%; outline: none; }}
         .gps-box {{ background: #f0fff4; border-left: 4px solid #38a169; padding: 12px 14px; border-radius: 8px; margin: 20px 0; font-size: 14px; }}
         .map-btn {{ display: block; width: 100%; text-align: center; background: #3182ce; color: white; padding: 14px 0; border-radius: 12px; text-decoration: none; font-weight: 600; box-sizing: border-box; }}
     </style>
@@ -84,12 +84,13 @@ public class QrGuideController : ControllerBase
     <div class='card'>
         <span class='badge'>📍 Audio Guide</span>
         <h1>{title}</h1>
-        <p id='descText'>{desc}</p>
+        <p id='descContent'>{desc}</p>
 
         <div class='audio-box'>
-            <button class='play-btn' id='btnAudio' onclick='togglePlayAudio()'>▶ Bấm để nghe thuyết minh</button>
-            <audio id='mainAudio' controls preload='auto'>
+            <label>🔊 Nhấn nút Play bên dưới để nghe thuyết minh:</label>
+            <audio id='guideAudio' controls preload='metadata'>
                 <source src='{audioSource}' type='audio/mpeg'>
+                Trình duyệt không hỗ trợ trình phát âm thanh.
             </audio>
         </div>
 
@@ -103,59 +104,54 @@ public class QrGuideController : ControllerBase
     </div>
 
     <script>
-        const audio = document.getElementById('mainAudio');
-        const btn = document.getElementById('btnAudio');
-        let isSpeaking = false;
+        const audio = document.getElementById('guideAudio');
+        let synth = window.speechSynthesis;
+        let isSpeakingText = false;
 
-        function togglePlayAudio() {{
-            // 1. Thử phát file audio nếu nguồn tải thành công
-            if (audio.src && audio.error == null) {{
-                if (audio.paused) {{
-                    audio.play().then(() => {{
-                        btn.innerText = '⏸ Đang phát âm thanh...';
-                        btn.style.background = '#38a169';
-                    }}).catch(err => {{
-                        speakText(); // Nếu lỗi trình duyệt chặn, dùng giọng đọc máy
-                    }});
-                }} else {{
-                    audio.pause();
-                    btn.innerText = '▶ Bấm để tiếp tục nghe';
-                    btn.style.background = '#e53e3e';
-                }}
-            }} else {{
-                speakText();
+        // Bắt sự kiện khi người dùng ấn nút Play trực tiếp trên thanh nghe
+        audio.addEventListener('play', () => {{
+            // Kiểm tra nếu link file mp3 không tải được hoặc bị lỗi nguồn
+            if (audio.error || !audio.currentSrc || audio.networkState === 3) {{
+                audio.pause();
+                playVietnameseSpeech();
             }}
+        }});
+
+        audio.addEventListener('pause', () => {{
+            if (isSpeakingText && synth) {{
+                synth.pause();
+            }}
+        }});
+
+        // Trình đọc tiếng Việt chuẩn (không bị phát âm từng ký tự tiếng Anh)
+        function playVietnameseSpeech() {{
+            if (!('speechSynthesis' in window)) return;
+
+            synth.cancel();
+            const content = document.getElementById('descContent').innerText;
+            const utter = new SpeechSynthesisUtterance(content);
+
+            // Ưu tiên chọn giọng đọc tiếng Việt của hệ thống
+            let voices = synth.getVoices();
+            let viVoice = voices.find(v => v.lang.includes('vi') || v.lang.includes('VN'));
+            if (viVoice) utter.voice = viVoice;
+
+            utter.lang = 'vi-VN';
+            utter.rate = 0.95; // Tốc độ đọc chuẩn tự nhiên
+
+            utter.onend = () => {{
+                isSpeakingText = false;
+            }};
+
+            synth.speak(utter);
+            isSpeakingText = true;
         }}
 
-        // 2. Tự động đọc bằng Text-To-Speech tiếng Việt của điện thoại nếu không có file âm thanh
-        function speakText() {{
-            if ('speechSynthesis' in window) {{
-                if (isSpeaking) {{
-                    window.speechSynthesis.cancel();
-                    isSpeaking = false;
-                    btn.innerText = '▶ Bấm để nghe thuyết minh';
-                    btn.style.background = '#e53e3e';
-                    return;
-                }}
-
-                const text = document.getElementById('descText').innerText;
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'vi-VN';
-                utterance.rate = 0.95;
-
-                utterance.onend = () => {{
-                    isSpeaking = false;
-                    btn.innerText = '▶ Nghe lại';
-                    btn.style.background = '#e53e3e';
-                }};
-
-                window.speechSynthesis.speak(utterance);
-                isSpeaking = true;
-                btn.innerText = '⏸ Đang đọc bài thuyết minh...';
-                btn.style.background = '#38a169';
-            }} else {{
-                alert('Trình duyệt chưa hỗ trợ phát file âm thanh này.');
-            }}
+        // Đảm bảo danh sách giọng nói được nạp sẵn khi tải trang
+        if ('speechSynthesis' in window) {{
+            window.speechSynthesis.onvoiceschanged = () => {{
+                window.speechSynthesis.getVoices();
+            }};
         }}
     </script>
 </body>
