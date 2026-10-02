@@ -4,14 +4,43 @@ using Microsoft.EntityFrameworkCore;
 using QRCoder;
 using System;
 using System.Linq;
+using System.Net.Http;
+using System.Web;
 
 namespace AudioGuide.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class QrGuideController(AppDbContext context) : ControllerBase
+public class QrGuideController(AppDbContext context, IHttpClientFactory httpClientFactory) : ControllerBase
 {
     private readonly AppDbContext _context = context;
+    private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
+
+    /// <summary>
+    /// API máy chủ tạo luồng file MP3 đọc tiếng Việt / tiếng Anh chuẩn, không phụ thuộc trình duyệt
+    /// </summary>
+    [HttpGet("audio")]
+    public async Task<IActionResult> GetTtsAudio([FromQuery] string text, [FromQuery] string lang = "vi")
+    {
+        if (string.IsNullOrWhiteSpace(text)) return BadRequest();
+
+        try
+        {
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
+
+            string encoded = HttpUtility.UrlEncode(text.Length > 200 ? text[..200] : text);
+            string ttsUrl = $"https://translate.google.com/translate_tts?ie=UTF-8&tl={lang}&client=tw-ob&q={encoded}";
+
+            var stream = await client.GetStreamAsync(ttsUrl);
+            return File(stream, "audio/mpeg");
+        }
+        catch
+        {
+            // Dự phòng nếu không kết nối được dịch vụ TTS
+            return StatusCode(500);
+        }
+    }
 
     [HttpGet("scan/{token}")]
     [Produces("text/html")]
@@ -28,7 +57,7 @@ public class QrGuideController(AppDbContext context) : ControllerBase
 
         var poi = qr?.Poi;
 
-        // 2. Tìm dự phòng theo ID hoặc Tên/Code
+        // 2. Dự phòng tìm theo ID hoặc Tên/Code
         poi ??= await _context.Pois
             .Include(p => p.Translations)
             .FirstOrDefaultAsync(p =>
@@ -43,7 +72,7 @@ public class QrGuideController(AppDbContext context) : ControllerBase
             return NotFound("<h3 style='font-family: sans-serif; text-align: center; margin-top: 50px;'>Không tìm thấy địa điểm tham quan hoặc mã QR không tồn tại.</h3>");
         }
 
-        // 3. Lấy bản dịch tương ứng theo ngôn ngữ
+        // 3. Lấy bản dịch tương ứng
         var translations = poi.Translations ?? Enumerable.Empty<Core.Entities.PoiTranslation>();
         var trans = translations.FirstOrDefault(t => string.Equals(t.LanguageCode, targetLang, StringComparison.OrdinalIgnoreCase))
                  ?? translations.FirstOrDefault(t => string.Equals(t.LanguageCode, "vi", StringComparison.OrdinalIgnoreCase))
@@ -51,14 +80,17 @@ public class QrGuideController(AppDbContext context) : ControllerBase
 
         string title = trans?.Title ?? "Điểm Tham Quan";
         string desc = trans?.Description ?? "Nội dung thuyết minh đang được cập nhật.";
-        string audioUrl = trans?.AudioUrl ?? string.Empty;
+
+        // URL stream MP3 trực tiếp từ backend
+        string safeDesc = HttpUtility.UrlEncode(desc);
+        string audioStreamUrl = $"{Request.Scheme}://{Request.Host}/api/QrGuide/audio?text={safeDesc}&lang={targetLang}";
 
         // Tọa độ GPS chính xác
         double lat = poi.Location != null ? poi.Location.Y : 10.7770;
         double lng = poi.Location != null ? poi.Location.X : 106.6953;
 
         string otherLang = targetLang == "vi" ? "en" : "vi";
-        string otherLangLabel = targetLang == "vi" ? "🇬🇧 English Version" : "🇻🇳 Phiên bản Tiếng Việt";
+        string otherLangLabel = targetLang == "vi" ? "🇬🇧 English" : "🇻🇳 Tiếng Việt";
 
         string htmlContent = $@"
 <!DOCTYPE html>
@@ -68,34 +100,115 @@ public class QrGuideController(AppDbContext context) : ControllerBase
     <meta name='viewport' content='width=device-width, initial-scale=1.0'>
     <title>{title} - Audio Guide</title>
     <style>
-        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background: #eef2f7; color: #2d3748; }}
-        .card {{ background: white; border-radius: 18px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.06); max-width: 480px; margin: auto; }}
-        .top-bar {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }}
-        .badge {{ background: #ebf8ff; color: #3182ce; padding: 5px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; }}
-        .lang-switch {{ font-size: 13px; text-decoration: none; color: #4a5568; background: #edf2f7; padding: 5px 10px; border-radius: 8px; font-weight: 500; }}
-        h1 {{ font-size: 22px; margin: 8px 0 14px 0; color: #1a365d; }}
-        p {{ line-height: 1.65; color: #4a5568; font-size: 15px; text-align: justify; }}
-        .audio-player-box {{ margin: 20px 0; background: #f7fafc; padding: 18px; border-radius: 14px; border: 1px solid #e2e8f0; text-align: center; }}
-        .play-control-btn {{ width: 100%; padding: 14px; font-size: 16px; font-weight: 600; color: white; background: #3182ce; border: none; border-radius: 10px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }}
-        .play-control-btn:active {{ transform: scale(0.98); }}
-        .gps-box {{ background: #f0fff4; border-left: 4px solid #38a169; padding: 12px 14px; border-radius: 8px; margin: 20px 0; font-size: 14px; }}
-        .map-btn {{ display: block; width: 100%; text-align: center; background: #2f855a; color: white; padding: 14px 0; border-radius: 12px; text-decoration: none; font-weight: 600; box-sizing: border-box; }}
+        body {{ 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            margin: 0; 
+            padding: 16px; 
+            background: #f0f2f5; 
+            color: #1c1e21; 
+        }}
+        .card {{ 
+            background: #ffffff; 
+            border-radius: 20px; 
+            padding: 24px; 
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08); 
+            max-width: 480px; 
+            margin: 0 auto; 
+        }}
+        .header-row {{ 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 12px; 
+        }}
+        .badge {{ 
+            background: #e7f3ff; 
+            color: #1877f2; 
+            padding: 6px 14px; 
+            border-radius: 20px; 
+            font-size: 13px; 
+            font-weight: 600; 
+        }}
+        .lang-switch {{ 
+            text-decoration: none; 
+            color: #4b4f56; 
+            background: #f0f2f5; 
+            padding: 6px 12px; 
+            border-radius: 12px; 
+            font-size: 13px; 
+            font-weight: 600; 
+        }}
+        h1 {{ 
+            font-size: 24px; 
+            font-weight: 700; 
+            margin: 8px 0 14px 0; 
+            color: #050505; 
+        }}
+        p {{ 
+            line-height: 1.6; 
+            color: #4b4f56; 
+            font-size: 15px; 
+            text-align: justify; 
+            margin-bottom: 20px; 
+        }}
+        
+        .audio-wrapper {{
+            background: #f1f3f4;
+            border-radius: 30px;
+            padding: 6px 10px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+        }}
+        
+        audio {{ 
+            width: 100%; 
+            height: 48px;
+            outline: none;
+            border-radius: 30px;
+        }}
+        
+        .gps-box {{ 
+            background: #e8f5e9; 
+            border-left: 4px solid #2e7d32; 
+            padding: 12px 14px; 
+            border-radius: 8px; 
+            margin: 18px 0; 
+            font-size: 14px; 
+            color: #1b5e20;
+        }}
+        .map-btn {{ 
+            display: block; 
+            width: 100%; 
+            text-align: center; 
+            background: #1877f2; 
+            color: #ffffff; 
+            padding: 14px 0; 
+            border-radius: 12px; 
+            text-decoration: none; 
+            font-weight: 600; 
+            box-sizing: border-box; 
+        }}
     </style>
 </head>
 <body>
     <div class='card'>
-        <div class='top-bar'>
+        <div class='header-row'>
             <span class='badge'>📍 Audio Guide</span>
             <a class='lang-switch' href='?lang={otherLang}'>{otherLangLabel}</a>
         </div>
         
         <h1>{title}</h1>
-        <p id='descText'>{desc}</p>
+        <p>{desc}</p>
 
-        <div class='audio-player-box'>
-            <button class='play-control-btn' id='mainBtn' onclick='toggleAudio()'>
-                ▶ {(targetLang == "vi" ? "Nghe thuyết minh tiếng Việt" : "Listen to English Narration")}
-            </button>
+        <!-- Thanh Audio Player nguyên bản hiển thị thời lượng và âm lượng -->
+        <div class='audio-wrapper'>
+            <audio controls preload='metadata'>
+                <source src='{audioStreamUrl}' type='audio/mpeg'>
+                Trình duyệt của bạn không hỗ trợ trình phát âm thanh.
+            </audio>
         </div>
 
         <div class='gps-box'>
@@ -106,55 +219,6 @@ public class QrGuideController(AppDbContext context) : ControllerBase
             🗺 {(targetLang == "vi" ? "Chỉ đường trên Google Maps" : "Open in Google Maps")}
         </a>
     </div>
-
-    <script>
-        let isPlaying = false;
-        const btn = document.getElementById('mainBtn');
-        const isEnglish = '{targetLang}' === 'en';
-
-        function toggleAudio() {{
-            if (!('speechSynthesis' in window)) {{
-                alert(isEnglish ? 'Your browser does not support audio playback.' : 'Trình duyệt không hỗ trợ phát âm thanh.');
-                return;
-            }}
-
-            if (isPlaying) {{
-                window.speechSynthesis.cancel();
-                isPlaying = false;
-                btn.innerHTML = isEnglish ? '▶ Listen to English Narration' : '▶ Nghe thuyết minh tiếng Việt';
-                btn.style.background = '#3182ce';
-                return;
-            }}
-
-            const text = document.getElementById('descText').innerText;
-            const utter = new SpeechSynthesisUtterance(text);
-            utter.lang = isEnglish ? 'en-US' : 'vi-VN';
-            utter.rate = 0.95;
-
-            // Tìm giọng chuẩn của thiết bị
-            const voices = window.speechSynthesis.getVoices();
-            const targetPrefix = isEnglish ? 'en' : 'vi';
-            const voice = voices.find(v => v.lang.toLowerCase().startsWith(targetPrefix));
-            if (voice) utter.voice = voice;
-
-            utter.onend = () => {{
-                isPlaying = false;
-                btn.innerHTML = isEnglish ? '▶ Replay Narration' : '▶ Nghe lại thuyết minh';
-                btn.style.background = '#3182ce';
-            }};
-
-            window.speechSynthesis.cancel();
-            window.speechSynthesis.speak(utter);
-            isPlaying = true;
-            btn.innerHTML = isEnglish ? '⏸ Playing... Tap to Pause' : '⏸ Đang phát thuyết minh... Nhấn để dừng';
-            btn.style.background = '#e53e3e';
-        }}
-
-        // Đảm bảo load giọng nói ngay khi trang vừa mở
-        if ('speechSynthesis' in window) {{
-            window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
-        }}
-    </script>
 </body>
 </html>";
 

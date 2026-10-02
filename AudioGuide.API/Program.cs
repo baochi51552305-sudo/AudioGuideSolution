@@ -15,7 +15,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IPoiRepository, PoiRepository>();
 builder.Services.AddScoped<IAudioGuideService, AudioGuideService>();
 
-// 3. Cấu hình CORS
+// 3. Đăng ký HttpClient Factory để stream âm thanh TTS trong QrGuideController
+builder.Services.AddHttpClient();
+
+// 4. Cấu hình CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowVercelAndLocal", policy =>
