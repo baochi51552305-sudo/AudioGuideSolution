@@ -1,7 +1,7 @@
-﻿using AudioGuide.Core.DTOs;
-using AudioGuide.Core.Interfaces;
+﻿using AudioGuide.Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using QRCoder;
+using System.Reflection;
 
 namespace AudioGuide.API.Controllers;
 
@@ -17,32 +17,107 @@ public class QrGuideController : ControllerBase
     }
 
     /// <summary>
-    /// Quét mã QR để lấy nội dung thuyết minh tương ứng
+    /// Quét mã QR: Trả về trang Web trực quan kèm Trình phát âm thanh và Tọa độ GPS
     /// </summary>
-    /// <param name="token">Mã QR in trên bảng di tích (vd: qr-ddl-01)</param>
-    /// <param name="lang">Mã ngôn ngữ tùy chọn (vi, en), nếu không truyền sẽ lấy từ header Accept-Language</param>
     [HttpGet("scan/{token}")]
-    public async Task<ActionResult<PoiNarrativeDto>> Scan(string token, [FromQuery] string? lang)
+    [Produces("text/html")]
+    public async Task<IActionResult> Scan(string token, [FromQuery] string? lang = "vi")
     {
-        var targetLang = lang ?? Request.Headers.AcceptLanguage.FirstOrDefault();
-        var narrative = await _guideService.ResolveQrScanAsync(token, targetLang);
+        var targetLang = !string.IsNullOrEmpty(lang)
+            ? lang
+            : (Request.Headers.AcceptLanguage.FirstOrDefault()?.Split(',')[0].Split('-')[0] ?? "vi");
 
-        if (narrative == null)
-            return NotFound(new { message = "Không tìm thấy điểm tham quan hoặc mã QR không tồn tại." });
+        var poi = await _guideService.ResolveQrScanAsync(token, targetLang);
 
-        return Ok(narrative);
+        if (poi == null)
+        {
+            return NotFound("<h3>Không tìm thấy địa điểm tham quan hoặc mã QR không hợp lệ.</h3>");
+        }
+
+        // Tự động đọc dữ liệu từ DTO bất kể tên thuộc tính
+        var props = poi.GetType().GetProperties();
+        string GetPropVal(string[] names) =>
+            props.FirstOrDefault(p => names.Contains(p.Name, StringComparer.OrdinalIgnoreCase))?.GetValue(poi)?.ToString() ?? "";
+
+        string title = GetPropVal(new[] { "PoiName", "Name", "Title" });
+        if (string.IsNullOrEmpty(title)) title = "Địa điểm di tích";
+
+        string desc = GetPropVal(new[] { "Description", "Content", "NarrativeText" });
+        if (string.IsNullOrEmpty(desc)) desc = "Chưa có nội dung mô tả chi tiết.";
+
+        string audioSource = GetPropVal(new[] { "AudioUrl", "AudioFileUrl", "Audio", "Url" });
+        if (string.IsNullOrEmpty(audioSource))
+        {
+            audioSource = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
+        }
+
+        double.TryParse(GetPropVal(new[] { "Latitude", "Lat" }), out double lat);
+        double.TryParse(GetPropVal(new[] { "Longitude", "Lng", "Long" }), out double lng);
+
+        if (lat == 0 && lng == 0)
+        {
+            lat = 10.7725;
+            lng = 106.6983;
+        }
+
+        string htmlContent = $@"
+<!DOCTYPE html>
+<html lang='vi'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>{title} - Thuyết Minh Tự Động</title>
+    <style>
+        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background: #eef2f7; color: #2d3748; }}
+        .card {{ background: white; border-radius: 18px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.06); max-width: 480px; margin: auto; }}
+        h1 {{ font-size: 22px; margin-top: 5px; color: #1a365d; }}
+        .badge {{ display: inline-block; background: #ebf8ff; color: #3182ce; padding: 5px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; margin-bottom: 12px; }}
+        p {{ line-height: 1.6; color: #4a5568; font-size: 15px; }}
+        .audio-box {{ margin: 22px 0; background: #f7fafc; padding: 16px; border-radius: 14px; border: 1px solid #edf2f7; text-align: center; }}
+        audio {{ width: 100%; margin-top: 10px; outline: none; }}
+        .gps-box {{ background: #f0fff4; border-left: 4px solid #38a169; padding: 12px 14px; border-radius: 8px; margin: 20px 0; font-size: 14px; }}
+        .map-btn {{ display: block; width: 100%; text-align: center; background: #3182ce; color: white; padding: 14px 0; border-radius: 12px; text-decoration: none; font-weight: 600; box-sizing: border-box; }}
+    </style>
+</head>
+<body>
+    <div class='card'>
+        <span class='badge'>📍 Audio Guide</span>
+        <h1>{title}</h1>
+        <p>{desc}</p>
+
+        <div class='audio-box'>
+            <strong>🔊 Thuyết minh âm thanh:</strong>
+            <audio controls autoplay>
+                <source src='{audioSource}' type='audio/mpeg'>
+                Trình duyệt của bạn không hỗ trợ phát âm thanh.
+            </audio>
+        </div>
+
+        <div class='gps-box'>
+            🌐 <strong>Tọa độ GPS:</strong> {lat:F5}, {lng:F5}
+        </div>
+
+        <a class='map-btn' href='https://www.google.com/maps?q={lat},{lng}' target='_blank'>
+            🗺 Chỉ đường trên Google Maps
+        </a>
+    </div>
+</body>
+</html>";
+
+        return Content(htmlContent, "text/html; charset=utf-8");
     }
+
+    /// <summary>
+    /// Sinh ảnh mã QR để in ra bảng di tích
+    /// </summary>
     [HttpGet("generate/{token}")]
     public IActionResult GenerateQr(string token, [FromQuery] string? lang = "vi")
     {
-        // URL thực tế của frontend hoặc endpoint scan trên Render
-        // Du khách quét QR bằng camera điện thoại sẽ mở URL này
         var requestUrl = $"{Request.Scheme}://{Request.Host}/api/QrGuide/scan/{token}?lang={lang}";
 
         using var qrGenerator = new QRCodeGenerator();
         var qrCodeData = qrGenerator.CreateQrCode(requestUrl, QRCodeGenerator.ECCLevel.Q);
 
-        // Tạo ảnh PNG dạng PngByteQRCode (hoạt động tốt trên Linux/Docker của Render)
         var qrCode = new PngByteQRCode(qrCodeData);
         byte[] qrCodeBytes = qrCode.GetGraphic(20);
 
