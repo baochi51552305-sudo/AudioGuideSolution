@@ -91,8 +91,7 @@ public class AppDbContext : DbContext
                 CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             }
         );
-
-        // B. Bản dịch thuyết minh tiếng Việt và tiếng Anh
+        // B. Dữ liệu bản dịch thuyết minh song ngữ (Sử dụng URL audio thực tế hoạt động 24/7)
         modelBuilder.Entity<PoiTranslation>().HasData(
             // 1. Dinh Độc Lập
             new PoiTranslation
@@ -101,8 +100,8 @@ public class AppDbContext : DbContext
                 PoiId = 1,
                 LanguageCode = "vi",
                 Title = "Dinh Độc Lập",
-                Description = "Dinh Độc Lập, còn gọi là Dinh Thống Nhất, là di tích lịch sử quốc gia đặc biệt tọa lạc tại Quận 1, Thành phố Hồ Chí Minh. Nơi đây từng chứng kiến sự kiện ngày 30 tháng 4 năm 1975 giải phóng miền Nam, thống nhất đất nước.",
-                AudioUrl = "https://cdn.example.com/audio/vi/dinh_doc_lap.mp3",
+                Description = "Dinh Độc Lập, còn gọi là Dinh Thống Nhất, là di tích lịch sử quốc gia đặc biệt tọa lạc tại trung tâm Quận 1, Thành phố Hồ Chí Minh. Nơi đây từng chứng kiến sự kiện ngày 30 tháng 4 năm 1975 giải phóng miền Nam, thống nhất đất nước.",
+                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
                 DurationSeconds = 180
             },
             new PoiTranslation
@@ -111,8 +110,8 @@ public class AppDbContext : DbContext
                 PoiId = 1,
                 LanguageCode = "en",
                 Title = "Independence Palace",
-                Description = "A special national historical landmark in District 1, Ho Chi Minh City, marking historic reunification events.",
-                AudioUrl = "https://cdn.example.com/audio/en/dinh_doc_lap.mp3",
+                Description = "A special national historical relic and architectural landmark in District 1, Ho Chi Minh City, marking historic reunification events.",
+                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
                 DurationSeconds = 175
             },
 
@@ -123,8 +122,8 @@ public class AppDbContext : DbContext
                 PoiId = 2,
                 LanguageCode = "vi",
                 Title = "Nhà thờ Đức Bà Sài Gòn",
-                Description = "Kiệt tác kiến trúc cổ kính giao hòa giữa Roman và Gothic, biểu tượng gắn liền với lịch sử đô thị Sài Gòn.",
-                AudioUrl = "https://cdn.example.com/audio/vi/nha_tho_duc_ba.mp3",
+                Description = "Kiệt tác kiến trúc cổ kính giao hòa giữa phong cách Roman và Gothic, biểu tượng gắn liền với lịch sử đô thị Sài Gòn.",
+                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
                 DurationSeconds = 150
             },
             new PoiTranslation
@@ -133,8 +132,8 @@ public class AppDbContext : DbContext
                 PoiId = 2,
                 LanguageCode = "en",
                 Title = "Notre-Dame Cathedral Basilica of Saigon",
-                Description = "An iconic cathedral built during the French colonial era in the heart of Saigon.",
-                AudioUrl = "https://cdn.example.com/audio/en/nha_tho_duc_ba.mp3",
+                Description = "An iconic cathedral built during the French colonial period in the heart of Saigon.",
+                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
                 DurationSeconds = 145
             },
 
@@ -145,8 +144,8 @@ public class AppDbContext : DbContext
                 PoiId = 3,
                 LanguageCode = "vi",
                 Title = "Bưu điện Trung tâm Thành phố",
-                Description = "Công trình kiến trúc Pháp đặc sắc kết hợp nét hoa văn trang trí phương Đông, được hoàn thành vào cuối thế kỷ 19.",
-                AudioUrl = "https://cdn.example.com/audio/vi/buu_dien_trung_tam.mp3",
+                Description = "Công trình kiến trúc Pháp đặc sắc kết hợp nét hoa văn trang trí phương Đông, được khánh thành vào cuối thế kỷ 19.",
+                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
                 DurationSeconds = 120
             },
             new PoiTranslation
@@ -156,7 +155,7 @@ public class AppDbContext : DbContext
                 LanguageCode = "en",
                 Title = "Saigon Central Post Office",
                 Description = "One of the oldest and most architecturally preserved post offices in Southeast Asia.",
-                AudioUrl = "https://cdn.example.com/audio/en/buu_dien_trung_tam.mp3",
+                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
                 DurationSeconds = 115
             }
         );
