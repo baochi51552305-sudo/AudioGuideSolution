@@ -3,24 +3,19 @@ using AudioGuide.Core.Services;
 using AudioGuide.Infrastructure.Data;
 using AudioGuide.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
+using System;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Lấy chuỗi kết nối
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
-// Đăng ký AppDbContext với SQL Server
+// 1. Cấu hình InMemory Database độc lập
 builder.Services.AddDbContext<AppDbContext>(options =>
-{
-    options.UseSqlServer(connectionString, sqlOptions =>
-    {
-        sqlOptions.UseNetTopologySuite();
-    });
-});
+    options.UseInMemoryDatabase("AudioGuideInMemoryDb"));
 
+// 2. Đăng ký Dependency Injection
 builder.Services.AddScoped<IPoiRepository, PoiRepository>();
 builder.Services.AddScoped<IAudioGuideService, AudioGuideService>();
 
+// 3. Cấu hình CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowVercelAndLocal", policy =>
@@ -38,6 +33,7 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+// Tự động khởi tạo dữ liệu mẫu đã khai báo ở AppDbContext
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
