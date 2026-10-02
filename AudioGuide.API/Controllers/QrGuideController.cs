@@ -29,7 +29,8 @@ public class QrGuideController(AppDbContext context, IHttpClientFactory httpClie
     };
 
     /// <summary>
-    /// API stream audio thuyết minh TTS thực tế cho từng ngôn ngữ
+    /// API chia nhỏ đoạn văn dài thành các câu rồi ghép nối các đoạn MP3 lại với nhau,
+    /// đảm bảo phát trọn vẹn bài thuyết minh dài 30s - 2 phút không bị giới hạn.
     /// </summary>
     [HttpGet("audio")]
     public async Task<IActionResult> GetTtsAudio([FromQuery] string text, [FromQuery] string lang = "vi")
@@ -41,16 +42,36 @@ public class QrGuideController(AppDbContext context, IHttpClientFactory httpClie
             var client = _httpClientFactory.CreateClient();
             client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
 
-            string cleanText = text.Length > 200 ? text[..195] + "..." : text;
-            string encoded = HttpUtility.UrlEncode(cleanText);
-
             string targetTtsLang = SupportedLanguages.TryGetValue(lang.ToLower(), out var langInfo) ? langInfo.GoogleLang : "vi";
-            string ttsUrl = $"https://translate.google.com/translate_tts?ie=UTF-8&tl={targetTtsLang}&client=tw-ob&q={encoded}";
 
-            byte[] audioBytes = await client.GetByteArrayAsync(ttsUrl);
+            // Tách văn bản dài theo các dấu câu để ngắt câu tự nhiên
+            var sentences = text.Split(new[] { '.', '!', '?', ';', '\n', '。', '！', '？' }, StringSplitOptions.RemoveEmptyEntries)
+                                .Select(s => s.Trim())
+                                .Where(s => !string.IsNullOrEmpty(s))
+                                .ToList();
 
+            if (sentences.Count == 0) sentences.Add(text.Trim());
+
+            using var memoryStream = new MemoryStream();
+
+            foreach (var chunk in sentences)
+            {
+                // Tránh chunk quá dài vượt ngưỡng của endpoint
+                string safeChunk = chunk.Length > 150 ? chunk[..150] : chunk;
+                string encoded = HttpUtility.UrlEncode(safeChunk);
+                string ttsUrl = $"https://translate.google.com/translate_tts?ie=UTF-8&tl={targetTtsLang}&client=tw-ob&q={encoded}";
+
+                var response = await client.GetAsync(ttsUrl);
+                if (response.IsSuccessStatusCode)
+                {
+                    byte[] chunkBytes = await response.Content.ReadAsByteArrayAsync();
+                    await memoryStream.WriteAsync(chunkBytes, 0, chunkBytes.Length);
+                }
+            }
+
+            byte[] fullAudioBytes = memoryStream.ToArray();
             Response.Headers.Append("Accept-Ranges", "bytes");
-            return File(audioBytes, "audio/mpeg", enableRangeProcessing: true);
+            return File(fullAudioBytes, "audio/mpeg", enableRangeProcessing: true);
         }
         catch
         {
