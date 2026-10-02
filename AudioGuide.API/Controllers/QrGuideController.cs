@@ -17,7 +17,7 @@ public class QrGuideController(AppDbContext context, IHttpClientFactory httpClie
     private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
 
     /// <summary>
-    /// API máy chủ tạo luồng file MP3 đọc tiếng Việt / tiếng Anh chuẩn, không phụ thuộc trình duyệt
+    /// API trả về toàn bộ dữ liệu file MP3 để trình duyệt tính đúng tổng thời lượng (0:05 / 0:18) và tua được
     /// </summary>
     [HttpGet("audio")]
     public async Task<IActionResult> GetTtsAudio([FromQuery] string text, [FromQuery] string lang = "vi")
@@ -29,15 +29,20 @@ public class QrGuideController(AppDbContext context, IHttpClientFactory httpClie
             var client = _httpClientFactory.CreateClient();
             client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
 
-            string encoded = HttpUtility.UrlEncode(text.Length > 200 ? text[..200] : text);
+            // Giới hạn câu đọc chuẩn ngữ điệu TTS
+            string cleanText = text.Length > 200 ? text[..195] + "..." : text;
+            string encoded = HttpUtility.UrlEncode(cleanText);
             string ttsUrl = $"https://translate.google.com/translate_tts?ie=UTF-8&tl={lang}&client=tw-ob&q={encoded}";
 
-            var stream = await client.GetStreamAsync(ttsUrl);
-            return File(stream, "audio/mpeg");
+            // Tải trọn vẹn mảng byte để có Content-Length cố định
+            byte[] audioBytes = await client.GetByteArrayAsync(ttsUrl);
+
+            // Bật Range Processing để điện thoại kéo tua và nhận diện đúng thanh thời lượng
+            Response.Headers.Append("Accept-Ranges", "bytes");
+            return File(audioBytes, "audio/mpeg", enableRangeProcessing: true);
         }
         catch
         {
-            // Dự phòng nếu không kết nối được dịch vụ TTS
             return StatusCode(500);
         }
     }
@@ -57,7 +62,7 @@ public class QrGuideController(AppDbContext context, IHttpClientFactory httpClie
 
         var poi = qr?.Poi;
 
-        // 2. Dự phòng tìm theo ID hoặc Tên/Code
+        // 2. Tìm dự phòng theo ID hoặc Tên/Code
         poi ??= await _context.Pois
             .Include(p => p.Translations)
             .FirstOrDefaultAsync(p =>
@@ -151,7 +156,6 @@ public class QrGuideController(AppDbContext context, IHttpClientFactory httpClie
             text-align: justify; 
             margin-bottom: 20px; 
         }}
-        
         .audio-wrapper {{
             background: #f1f3f4;
             border-radius: 30px;
@@ -162,14 +166,12 @@ public class QrGuideController(AppDbContext context, IHttpClientFactory httpClie
             justify-content: center;
             box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
         }}
-        
         audio {{ 
             width: 100%; 
             height: 48px;
             outline: none;
             border-radius: 30px;
         }}
-        
         .gps-box {{ 
             background: #e8f5e9; 
             border-left: 4px solid #2e7d32; 
@@ -203,7 +205,6 @@ public class QrGuideController(AppDbContext context, IHttpClientFactory httpClie
         <h1>{title}</h1>
         <p>{desc}</p>
 
-        <!-- Thanh Audio Player nguyên bản hiển thị thời lượng và âm lượng -->
         <div class='audio-wrapper'>
             <audio controls preload='metadata'>
                 <source src='{audioStreamUrl}' type='audio/mpeg'>
