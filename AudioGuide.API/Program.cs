@@ -7,7 +7,7 @@ using System;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Cấu hình InMemory Database độc lập
+// 1. Cấu hình InMemory Database trên RAM
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseInMemoryDatabase("AudioGuideInMemoryDb"));
 
@@ -15,7 +15,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IPoiRepository, PoiRepository>();
 builder.Services.AddScoped<IAudioGuideService, AudioGuideService>();
 
-// 3. Đăng ký HttpClient Factory để stream âm thanh TTS trong QrGuideController
+// 3. Đăng ký HttpClient Factory
 builder.Services.AddHttpClient();
 
 // 4. Cấu hình CORS
@@ -36,7 +36,7 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Tự động khởi tạo dữ liệu mẫu đã khai báo ở AppDbContext
+// Tự động khởi tạo và nạp 5 địa điểm + 5 ngôn ngữ vào RAM
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();

@@ -57,114 +57,339 @@ public class AppDbContext : DbContext
         });
 
         // ==========================================
-        // SEED DATA CHUẨN
+        // SEED DATA: 5 ĐỊA ĐIỂM TIÊU BIỂU TP.HCM
         // ==========================================
         var geometryFactory = NetTopologySuite.NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
 
-        // A. Danh sách 3 địa danh chuẩn (Kinh độ X, Vĩ độ Y)
+        // A. Danh sách 5 địa danh (Kinh độ X, Vĩ độ Y)
         modelBuilder.Entity<Poi>().HasData(
             new Poi
             {
                 Id = 1,
-                Code = "DINH_DOC_LAP",
-                Location = geometryFactory.CreatePoint(new Coordinate(106.6953, 10.7770)), // Dinh Độc Lập
+                Code = "CHO_BEN_THANH",
+                Location = geometryFactory.CreatePoint(new Coordinate(106.6983, 10.7725)), // Chợ Bến Thành
+                TriggerRadiusMeters = 35.0,
+                IsActive = true,
+                CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+            },
+            new Poi
+            {
+                Id = 2,
+                Code = "NHA_HAT_THANH_PHO",
+                Location = geometryFactory.CreatePoint(new Coordinate(106.7032, 10.7766)), // Nhà hát Thành phố
                 TriggerRadiusMeters = 30.0,
                 IsActive = true,
                 CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             },
             new Poi
             {
-                Id = 2,
-                Code = "NHA_THO_DUC_BA",
-                Location = geometryFactory.CreatePoint(new Coordinate(106.6990, 10.7798)), // Nhà thờ Đức Bà
-                TriggerRadiusMeters = 25.0,
+                Id = 3,
+                Code = "BAO_TANG_CHUNG_TICH_CHIEN_TRANH",
+                Location = geometryFactory.CreatePoint(new Coordinate(106.6922, 10.7794)), // Bảo tàng Chứng tích Chiến tranh
+                TriggerRadiusMeters = 30.0,
                 IsActive = true,
                 CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             },
             new Poi
             {
-                Id = 3,
-                Code = "BUU_DIEN_TRUNG_TAM",
-                Location = geometryFactory.CreatePoint(new Coordinate(106.6999, 10.7799)), // Bưu điện Thành phố
-                TriggerRadiusMeters = 25.0,
+                Id = 4,
+                Code = "LANDMARK_81",
+                Location = geometryFactory.CreatePoint(new Coordinate(106.7218, 10.7950)), // Landmark 81
+                TriggerRadiusMeters = 50.0,
+                IsActive = true,
+                CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+            },
+            new Poi
+            {
+                Id = 5,
+                Code = "BEN_NHA_RONG",
+                Location = geometryFactory.CreatePoint(new Coordinate(106.7068, 10.7681)), // Bến Nhà Rồng
+                TriggerRadiusMeters = 35.0,
                 IsActive = true,
                 CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             }
         );
-        // B. Dữ liệu bản dịch thuyết minh song ngữ (Sử dụng URL audio thực tế hoạt động 24/7)
+
+        // B. Bản dịch thuyết minh 5 ngôn ngữ (vi, zh, en, fr, ru)
         modelBuilder.Entity<PoiTranslation>().HasData(
-            // 1. Dinh Độc Lập
+            // ----------------------------------------------------
+            // 1. Chợ Bến Thành (Id: 1 -> 5)
+            // ----------------------------------------------------
             new PoiTranslation
             {
                 Id = 1,
                 PoiId = 1,
                 LanguageCode = "vi",
-                Title = "Dinh Độc Lập",
-                Description = "Dinh Độc Lập, còn gọi là Dinh Thống Nhất, là di tích lịch sử quốc gia đặc biệt tọa lạc tại trung tâm Quận 1, Thành phố Hồ Chí Minh. Nơi đây từng chứng kiến sự kiện ngày 30 tháng 4 năm 1975 giải phóng miền Nam, thống nhất đất nước.",
-                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
-                DurationSeconds = 180
-            },
-            new PoiTranslation
-            {
-                Id = 2,
-                PoiId = 1,
-                LanguageCode = "en",
-                Title = "Independence Palace",
-                Description = "A special national historical relic and architectural landmark in District 1, Ho Chi Minh City, marking historic reunification events.",
-                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
-                DurationSeconds = 175
-            },
-
-            // 2. Nhà thờ Đức Bà
-            new PoiTranslation
-            {
-                Id = 3,
-                PoiId = 2,
-                LanguageCode = "vi",
-                Title = "Nhà thờ Đức Bà Sài Gòn",
-                Description = "Kiệt tác kiến trúc cổ kính giao hòa giữa phong cách Roman và Gothic, biểu tượng gắn liền với lịch sử đô thị Sài Gòn.",
+                Title = "Chợ Bến Thành",
+                Description = "Biểu tượng giao thương lâu đời và sống động bậc nhất giữa lòng trung tâm Thành phố Hồ Chí Minh.",
                 AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
                 DurationSeconds = 150
             },
             new PoiTranslation
             {
-                Id = 4,
-                PoiId = 2,
-                LanguageCode = "en",
-                Title = "Notre-Dame Cathedral Basilica of Saigon",
-                Description = "An iconic cathedral built during the French colonial period in the heart of Saigon.",
+                Id = 2,
+                PoiId = 1,
+                LanguageCode = "zh",
+                Title = "滨城市场",
+                Description = "胡志明市最具代表性的历史贸易集市，汇聚丰富多元的越南地道特色商品与美食文化。",
                 AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
                 DurationSeconds = 145
             },
-
-            // 3. Bưu điện Trung tâm
+            new PoiTranslation
+            {
+                Id = 3,
+                PoiId = 1,
+                LanguageCode = "en",
+                Title = "Ben Thanh Market",
+                Description = "One of the most famous and historic commercial landmarks in central Ho Chi Minh City.",
+                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
+                DurationSeconds = 140
+            },
+            new PoiTranslation
+            {
+                Id = 4,
+                PoiId = 1,
+                LanguageCode = "fr",
+                Title = "Marché de Ben Thanh",
+                Description = "Symbole commercial et culturel emblématique au cœur de Hô Chi Minh-Ville.",
+                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
+                DurationSeconds = 148
+            },
             new PoiTranslation
             {
                 Id = 5,
+                PoiId = 1,
+                LanguageCode = "ru",
+                Title = "Рынок Бен Тхань",
+                Description = "Один из старейших и известнейших торговых символов в центре Хошимина.",
+                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
+                DurationSeconds = 152
+            },
+
+            // ----------------------------------------------------
+            // 2. Nhà hát Thành phố (Id: 6 -> 10)
+            // ----------------------------------------------------
+            new PoiTranslation
+            {
+                Id = 6,
+                PoiId = 2,
+                LanguageCode = "vi",
+                Title = "Nhà hát Thành phố",
+                Description = "Công trình nghệ thuật kiến trúc Gothic - Phục Hưng Pháp tráng lệ khánh thành năm 1900.",
+                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
+                DurationSeconds = 160
+            },
+            new PoiTranslation
+            {
+                Id = 7,
+                PoiId = 2,
+                LanguageCode = "zh",
+                Title = "胡志明市大剧院",
+                Description = "于1900年竣工的典雅法国殖民时期哥特式与文艺复兴风格艺术建筑瑰宝。",
+                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
+                DurationSeconds = 155
+            },
+            new PoiTranslation
+            {
+                Id = 8,
+                PoiId = 2,
+                LanguageCode = "en",
+                Title = "Saigon Opera House",
+                Description = "A magnificent French colonial architectural opera house completed in 1900.",
+                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
+                DurationSeconds = 150
+            },
+            new PoiTranslation
+            {
+                Id = 9,
+                PoiId = 2,
+                LanguageCode = "fr",
+                Title = "Opéra de Saïgon",
+                Description = "Magnifique chef-d'œuvre de l'architecture coloniale française inauguré en 1900.",
+                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
+                DurationSeconds = 158
+            },
+            new PoiTranslation
+            {
+                Id = 10,
+                PoiId = 2,
+                LanguageCode = "ru",
+                Title = "Муниципальный театр Сайгона",
+                Description = "Величественное здание оперного театра в колониальном французском стиле, открытое в 1900 году.",
+                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
+                DurationSeconds = 162
+            },
+
+            // ----------------------------------------------------
+            // 3. Bảo tàng Chứng tích Chiến tranh (Id: 11 -> 15)
+            // ----------------------------------------------------
+            new PoiTranslation
+            {
+                Id = 11,
                 PoiId = 3,
                 LanguageCode = "vi",
-                Title = "Bưu điện Trung tâm Thành phố",
-                Description = "Công trình kiến trúc Pháp đặc sắc kết hợp nét hoa văn trang trí phương Đông, được khánh thành vào cuối thế kỷ 19.",
+                Title = "Bảo tàng Chứng tích Chiến tranh",
+                Description = "Nơi lưu giữ những tài liệu, hiện vật lịch sử chân thực về các cuộc chiến tranh và thông điệp hòa bình.",
+                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
+                DurationSeconds = 190
+            },
+            new PoiTranslation
+            {
+                Id = 12,
+                PoiId = 3,
+                LanguageCode = "zh",
+                Title = "战争遗迹博物馆",
+                Description = "展示有关越南近代战争历史照片、军事实物并传递珍爱和平理念的纪念博物馆。",
+                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
+                DurationSeconds = 185
+            },
+            new PoiTranslation
+            {
+                Id = 13,
+                PoiId = 3,
+                LanguageCode = "en",
+                Title = "War Remnants Museum",
+                Description = "A poignant museum preserving wartime exhibits, artifacts, and powerful calls for world peace.",
+                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
+                DurationSeconds = 180
+            },
+            new PoiTranslation
+            {
+                Id = 14,
+                PoiId = 3,
+                LanguageCode = "fr",
+                Title = "Musée des vestiges de guerre",
+                Description = "Musée mémorial conservant des preuves historiques émouvantes et un puissant message de paix.",
+                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
+                DurationSeconds = 188
+            },
+            new PoiTranslation
+            {
+                Id = 15,
+                PoiId = 3,
+                LanguageCode = "ru",
+                Title = "Музей жертв войны",
+                Description = "Мемориальный комплекс, хранящий свидетельства военных событий и призыв к глобальному миру.",
+                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
+                DurationSeconds = 195
+            },
+
+            // ----------------------------------------------------
+            // 4. Landmark 81 (Id: 16 -> 20)
+            // ----------------------------------------------------
+            new PoiTranslation
+            {
+                Id = 16,
+                PoiId = 4,
+                LanguageCode = "vi",
+                Title = "Landmark 81",
+                Description = "Tòa nhà cao nhất Việt Nam, biểu tượng cho khát vọng phát triển năng động và hiện đại.",
+                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
+                DurationSeconds = 130
+            },
+            new PoiTranslation
+            {
+                Id = 17,
+                PoiId = 4,
+                LanguageCode = "zh",
+                Title = "地标塔 81",
+                Description = "越南第一高楼，象征着胡志明市现代化蓬勃发展的新地标建筑。",
+                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
+                DurationSeconds = 125
+            },
+            new PoiTranslation
+            {
+                Id = 18,
+                PoiId = 4,
+                LanguageCode = "en",
+                Title = "Landmark 81",
+                Description = "The tallest skyscraper in Vietnam, symbolizing modern prosperity and dynamism.",
                 AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
                 DurationSeconds = 120
             },
             new PoiTranslation
             {
-                Id = 6,
-                PoiId = 3,
-                LanguageCode = "en",
-                Title = "Saigon Central Post Office",
-                Description = "One of the oldest and most architecturally preserved post offices in Southeast Asia.",
+                Id = 19,
+                PoiId = 4,
+                LanguageCode = "fr",
+                Title = "Landmark 81",
+                Description = "Le plus haut gratte-ciel du Vietnam, symbole de modernité et d'élan économique.",
                 AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
-                DurationSeconds = 115
+                DurationSeconds = 128
+            },
+            new PoiTranslation
+            {
+                Id = 20,
+                PoiId = 4,
+                LanguageCode = "ru",
+                Title = "Небоскреб Landmark 81",
+                Description = "Самое высокое здание во Вьетнаме, символ стремительного современного развития страны.",
+                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
+                DurationSeconds = 132
+            },
+
+            // ----------------------------------------------------
+            // 5. Bến Nhà Rồng (Id: 21 -> 25)
+            // ----------------------------------------------------
+            new PoiTranslation
+            {
+                Id = 21,
+                PoiId = 5,
+                LanguageCode = "vi",
+                Title = "Bến Nhà Rồng",
+                Description = "Di tích lịch sử quan trọng bên sông Sài Gòn, nơi Bác Hồ ra đi tìm đường cứu nước năm 1911.",
+                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
+                DurationSeconds = 170
+            },
+            new PoiTranslation
+            {
+                Id = 22,
+                PoiId = 5,
+                LanguageCode = "zh",
+                Title = "龙屋港（胡志明博物馆）",
+                Description = "坐落于西贡河畔的重要历史遗址，1911年胡志明主席在此登船踏上寻求救国之路。",
+                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
+                DurationSeconds = 165
+            },
+            new PoiTranslation
+            {
+                Id = 23,
+                PoiId = 5,
+                LanguageCode = "en",
+                Title = "Dragon Wharf (Nha Rong Wharf)",
+                Description = "A historic riverfront monument where President Ho Chi Minh departed to seek national salvation in 1911.",
+                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
+                DurationSeconds = 160
+            },
+            new PoiTranslation
+            {
+                Id = 24,
+                PoiId = 5,
+                LanguageCode = "fr",
+                Title = "Quai Nha Rong",
+                Description = "Site historique majeur au bord du fleuve Saïgon d'où le président Hô Chi Minh est parti en 1911.",
+                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
+                DurationSeconds = 168
+            },
+            new PoiTranslation
+            {
+                Id = 25,
+                PoiId = 5,
+                LanguageCode = "ru",
+                Title = "Пристань Няронг",
+                Description = "Знаковое историческое место на реке Сайгон, откуда в 1911 году Хо Ши Мин отправился в путь за освобождение родины.",
+                AudioUrl = "https://actions.google.com/sounds/v1/ambiences/daytime_forest_bonfire.ogg",
+                DurationSeconds = 172
             }
         );
 
-        // C. Mã token QR chuẩn liên kết trực tiếp vào từng POI
+        // C. Mã token QR liên kết trực tiếp vào 5 POI
         modelBuilder.Entity<QrCode>().HasData(
-            new QrCode { Id = 1, PoiId = 1, QrToken = "qr-ddl-01", ScanCount = 0, IsActive = true },
-            new QrCode { Id = 2, PoiId = 2, QrToken = "qr-ntdb-02", ScanCount = 0, IsActive = true },
-            new QrCode { Id = 3, PoiId = 3, QrToken = "qr-bdsg-03", ScanCount = 0, IsActive = true }
+            new QrCode { Id = 1, PoiId = 1, QrToken = "qr-cbt-01", ScanCount = 0, IsActive = true },
+            new QrCode { Id = 2, PoiId = 2, QrToken = "qr-nhtp-02", ScanCount = 0, IsActive = true },
+            new QrCode { Id = 3, PoiId = 3, QrToken = "qr-btct-03", ScanCount = 0, IsActive = true },
+            new QrCode { Id = 4, PoiId = 4, QrToken = "qr-lm81-04", ScanCount = 0, IsActive = true },
+            new QrCode { Id = 5, PoiId = 5, QrToken = "qr-bnr-05", ScanCount = 0, IsActive = true }
         );
     }
 }
