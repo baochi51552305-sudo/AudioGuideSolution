@@ -1,6 +1,7 @@
 ﻿using AudioGuide.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 using NetTopologySuite.Geometries;
+using System;
 
 namespace AudioGuide.Infrastructure.Data;
 
@@ -18,13 +19,12 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // 1. Cấu hình bảng POI (Điểm tham quan)
+        // 1. Cấu hình bảng POI
         modelBuilder.Entity<Poi>(entity =>
         {
             entity.HasKey(p => p.Id);
             entity.Property(p => p.Code).HasMaxLength(50).IsRequired();
             entity.HasIndex(p => p.Code).IsUnique();
-
         });
 
         // 2. Cấu hình bảng POI Translations (Đa ngôn ngữ)
@@ -35,7 +35,6 @@ public class AppDbContext : DbContext
             entity.Property(t => t.Title).HasMaxLength(200).IsRequired();
             entity.Property(t => t.AudioUrl).HasMaxLength(500).IsRequired();
 
-            // Một POI không thể có 2 bản dịch trùng cùng một ngôn ngữ
             entity.HasIndex(t => new { t.PoiId, t.LanguageCode }).IsUnique();
 
             entity.HasOne(t => t.Poi)
@@ -44,7 +43,7 @@ public class AppDbContext : DbContext
                   .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // 3. Cấu hình bảng QR Code động
+        // 3. Cấu hình bảng QR Code
         modelBuilder.Entity<QrCode>(entity =>
         {
             entity.HasKey(q => q.Id);
@@ -58,19 +57,18 @@ public class AppDbContext : DbContext
         });
 
         // ==========================================
-        // SEED DATA: 3 ĐỊA DANH THỰC TẾ TẠI TP.HCM
+        // SEED DATA CHUẨN
         // ==========================================
-        // Khởi tạo GeometryFactory với hệ quy chiếu SRID 4326 (chuẩn tọa độ GPS toàn cầu)
         var geometryFactory = NetTopologySuite.NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
 
-        // A. Dữ liệu POI (Tọa độ dạng Longitude - Kinh độ, Latitude - Vĩ độ)
+        // A. Danh sách 3 địa danh chuẩn (Kinh độ X, Vĩ độ Y)
         modelBuilder.Entity<Poi>().HasData(
             new Poi
             {
                 Id = 1,
                 Code = "DINH_DOC_LAP",
                 Location = geometryFactory.CreatePoint(new Coordinate(106.6953, 10.7770)), // Dinh Độc Lập
-                TriggerRadiusMeters = 20.0,
+                TriggerRadiusMeters = 30.0,
                 IsActive = true,
                 CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             },
@@ -79,7 +77,7 @@ public class AppDbContext : DbContext
                 Id = 2,
                 Code = "NHA_THO_DUC_BA",
                 Location = geometryFactory.CreatePoint(new Coordinate(106.6990, 10.7798)), // Nhà thờ Đức Bà
-                TriggerRadiusMeters = 15.0,
+                TriggerRadiusMeters = 25.0,
                 IsActive = true,
                 CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             },
@@ -88,13 +86,13 @@ public class AppDbContext : DbContext
                 Id = 3,
                 Code = "BUU_DIEN_TRUNG_TAM",
                 Location = geometryFactory.CreatePoint(new Coordinate(106.6999, 10.7799)), // Bưu điện Thành phố
-                TriggerRadiusMeters = 15.0,
+                TriggerRadiusMeters = 25.0,
                 IsActive = true,
                 CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             }
         );
 
-        // B. Dữ liệu bản dịch thuyết minh song ngữ
+        // B. Bản dịch thuyết minh tiếng Việt và tiếng Anh
         modelBuilder.Entity<PoiTranslation>().HasData(
             // 1. Dinh Độc Lập
             new PoiTranslation
@@ -103,7 +101,7 @@ public class AppDbContext : DbContext
                 PoiId = 1,
                 LanguageCode = "vi",
                 Title = "Dinh Độc Lập",
-                Description = "Di tích lịch sử quốc gia đặc biệt, biểu tượng của sự thống nhất đất nước.",
+                Description = "Dinh Độc Lập, còn gọi là Dinh Thống Nhất, là di tích lịch sử quốc gia đặc biệt tọa lạc tại Quận 1, Thành phố Hồ Chí Minh. Nơi đây từng chứng kiến sự kiện ngày 30 tháng 4 năm 1975 giải phóng miền Nam, thống nhất đất nước.",
                 AudioUrl = "https://cdn.example.com/audio/vi/dinh_doc_lap.mp3",
                 DurationSeconds = 180
             },
@@ -113,19 +111,19 @@ public class AppDbContext : DbContext
                 PoiId = 1,
                 LanguageCode = "en",
                 Title = "Independence Palace",
-                Description = "A special national historical relic and architectural landmark in District 1.",
+                Description = "A special national historical landmark in District 1, Ho Chi Minh City, marking historic reunification events.",
                 AudioUrl = "https://cdn.example.com/audio/en/dinh_doc_lap.mp3",
                 DurationSeconds = 175
             },
 
-            // 2. Nhà thờ Đức Bà Sài Gòn
+            // 2. Nhà thờ Đức Bà
             new PoiTranslation
             {
                 Id = 3,
                 PoiId = 2,
                 LanguageCode = "vi",
                 Title = "Nhà thờ Đức Bà Sài Gòn",
-                Description = "Kiệt tác kiến trúc cổ kính phong cách Roman và Gothic nằm giữa trung tâm Sài Gòn.",
+                Description = "Kiệt tác kiến trúc cổ kính giao hòa giữa Roman và Gothic, biểu tượng gắn liền với lịch sử đô thị Sài Gòn.",
                 AudioUrl = "https://cdn.example.com/audio/vi/nha_tho_duc_ba.mp3",
                 DurationSeconds = 150
             },
@@ -135,19 +133,19 @@ public class AppDbContext : DbContext
                 PoiId = 2,
                 LanguageCode = "en",
                 Title = "Notre-Dame Cathedral Basilica of Saigon",
-                Description = "An iconic cathedral built during the French colonial period.",
+                Description = "An iconic cathedral built during the French colonial era in the heart of Saigon.",
                 AudioUrl = "https://cdn.example.com/audio/en/nha_tho_duc_ba.mp3",
                 DurationSeconds = 145
             },
 
-            // 3. Bưu điện Trung tâm Thành phố
+            // 3. Bưu điện Trung tâm
             new PoiTranslation
             {
                 Id = 5,
                 PoiId = 3,
                 LanguageCode = "vi",
                 Title = "Bưu điện Trung tâm Thành phố",
-                Description = "Công trình kiến trúc mang đậm dấu ấn phong cách Pháp được khánh thành vào cuối thế kỷ 19.",
+                Description = "Công trình kiến trúc Pháp đặc sắc kết hợp nét hoa văn trang trí phương Đông, được hoàn thành vào cuối thế kỷ 19.",
                 AudioUrl = "https://cdn.example.com/audio/vi/buu_dien_trung_tam.mp3",
                 DurationSeconds = 120
             },
@@ -157,13 +155,13 @@ public class AppDbContext : DbContext
                 PoiId = 3,
                 LanguageCode = "en",
                 Title = "Saigon Central Post Office",
-                Description = "One of the oldest and most beautiful post offices in Southeast Asia.",
+                Description = "One of the oldest and most architecturally preserved post offices in Southeast Asia.",
                 AudioUrl = "https://cdn.example.com/audio/en/buu_dien_trung_tam.mp3",
                 DurationSeconds = 115
             }
         );
 
-        // C. Dữ liệu mã QR in thực tế tại từng địa danh
+        // C. Mã token QR chuẩn liên kết trực tiếp vào từng POI
         modelBuilder.Entity<QrCode>().HasData(
             new QrCode { Id = 1, PoiId = 1, QrToken = "qr-ddl-01", ScanCount = 0, IsActive = true },
             new QrCode { Id = 2, PoiId = 2, QrToken = "qr-ntdb-02", ScanCount = 0, IsActive = true },
